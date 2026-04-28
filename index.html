@@ -86,7 +86,7 @@ var INFO={
   seguros:'IMSS, ISSSTE, GNP, AXA, Metlife'
 };
 var QR=['Agendar una cita','Ver especialidades','Horarios y costos','Hablar con alguien'];
-var history=[],busy=false,started=false;
+var chatHistory=[],busy=false,started=false;
 
 function now(){return new Date().toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'})}
 
@@ -118,19 +118,19 @@ async function doSend(txt){
   busy=true;
   document.getElementById('cb-qr').innerHTML='';
   addMsg(txt,'u');
-  history.push({role:'user',content:txt});
+  chatHistory.push({role:'user',content:txt});
   showTyping();
   try{
     var r=await fetch('/api/chat',{
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({messages:history,clinicInfo:INFO})
+      body:JSON.stringify({messages:chatHistory,clinicInfo:INFO})
     });
     var d=await r.json();
     hideTyping();
     var reply=d.reply||'Lo siento, hubo un error. Intenta de nuevo.';
     addMsg(reply,'b');
-    history.push({role:'assistant',content:reply});
+    chatHistory.push({role:'assistant',content:reply});
   }catch(e){
     hideTyping();
     addMsg('Error de conexión. Por favor intenta de nuevo.','b');
