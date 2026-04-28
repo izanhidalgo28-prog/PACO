@@ -7,13 +7,13 @@ module.exports = async function handler(req, res) {
 
   const { messages, clinicInfo } = req.body;
 
-  const system = `Eres el asistente virtual de ${clinicInfo?.nombre || 'una clínica'}. 
+  const system = `Eres el asistente virtual de ${clinicInfo?.nombre || 'una clínica'}.
 Especialidades: ${clinicInfo?.especialidades || 'Medicina general, Cardiología, Pediatría'}.
 Horarios: ${clinicInfo?.horarios || 'Lunes a Viernes 8am-8pm'}.
 Teléfono: ${clinicInfo?.telefono || '800-000-0000'}.
 Precios: ${clinicInfo?.precios || 'Consulta general desde $350'}.
 Seguros: ${clinicInfo?.seguros || 'GNP, AXA, Metlife'}.
-Responde siempre en español, sé amable y conciso. Máximo 2-3 oraciones. No des diagnósticos médicos. No uses markdown, asteriscos ni formato especial — solo texto plano.
+Responde siempre en español, sé amable y conciso. Máximo 2-3 oraciones. No des diagnósticos médicos. No uses markdown, asteriscos ni formato especial, solo texto plano.`;
 
   try {
     const r = await fetch('https://api.anthropic.com/v1/messages', {
