@@ -1,12 +1,76 @@
 const twilio = require('twilio');
 
+const conversaciones = {};
+
 module.exports = async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end();
 
-  const userMessage = req.body.Body;
+  const userMessage = req.body.Body.trim();
   const from = req.body.From;
 
-  const system = `Eres el asistente virtual de Clínica Vicente Pascual, especializada en Fisioterapia, Osteopatía y Podología en Av. Alicante nº46, Elche. Teléfono: 966 20 21 22. Responde en español, sé amable y conciso. Máximo 3 oraciones. No des diagnósticos médicos.`;
+  if (!conversaciones[from]) conversaciones[from] = { paso: null };
+  const conv = conversaciones[from];
+
+  const SHEETS_URL = 'https://script.google.com/macros/s/AKfycbxNJTkjcBXCG7JGMWNPy1pqglZiHOwqek8nBUu9xYGB3X0gm-soUohxkEnIKx8opORy/exec';
+
+  function responder(texto) {
+    const twiml = new twilio.twiml.MessagingResponse();
+    twiml.message(texto);
+    res.setHeader('Content-Type', 'text/xml');
+    res.status(200).send(twiml.toString());
+  }
+
+  const msg = userMessage.toLowerCase();
+
+  // Flujo de cita
+  if (conv.paso === 'nombre') {
+    conv.nombre = userMessage;
+    conv.paso = 'telefono';
+    return responder('¿Cuál es tu número de teléfono?');
+  }
+  if (conv.paso === 'telefono') {
+    conv.telefono = userMessage;
+    conv.paso = 'servicio';
+    return responder('¿Qué servicio necesitas?\n1. Fisioterapia\n2. Osteopatía\n3. Podología\n4. No sé, necesito orientación');
+  }
+  if (conv.paso === 'servicio') {
+    conv.servicio = userMessage;
+    conv.paso = 'dia';
+    return responder('¿Qué día te viene mejor? (ej: lunes, martes...)');
+  }
+  if (conv.paso === 'dia') {
+    conv.dia = userMessage;
+    conv.paso = 'hora';
+    return responder('¿Prefieres mañana (8am-12pm), tarde (12pm-4pm) o última hora (4pm-8pm)?');
+  }
+  if (conv.paso === 'hora') {
+    conv.hora = userMessage;
+    conv.paso = null;
+
+    await fetch(SHEETS_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        nombre: conv.nombre,
+        telefono: conv.telefono,
+        tratamiento: conv.servicio,
+        dia: conv.dia,
+        hora: conv.hora
+      })
+    }).catch(() => {});
+
+    return responder(`Perfecto ${conv.nombre}, tu cita de ${conv.servicio} para el ${conv.dia} por la ${conv.hora} ha sido registrada. Te llamaremos al ${conv.telefono} para confirmar. ¡Hasta pronto!`);
+  }
+
+  // Detectar intención de cita
+  if (msg.includes('cita') || msg.includes('reservar') || msg.includes('pedir')) {
+    conv.paso = 'nombre';
+    return responder('Perfecto, vamos a pedir tu cita. ¿Cuál es tu nombre completo?');
+  }
+
+  // IA para todo lo demás
+  const system = `Eres el asistente virtual de Clínica Vicente Pascual, especializada en Fisioterapia, Osteopatía y Podología en Av. Alicante nº46, Elche. Teléfono: 966 20 21 22. Responde en español, sé amable y conciso. Máximo 3 oraciones. No des diagnósticos médicos. Si alguien quiere pedir cita dile que escriba la palabra "cita".`;
 
   try {
     const r = await fetch('https://api.anthropic.com/v1/messages', {
@@ -23,18 +87,9 @@ module.exports = async function handler(req, res) {
         messages: [{ role: 'user', content: userMessage }]
       })
     });
-
     const data = await r.json();
-    const reply = data.content[0].text;
-
-    const twiml = new twilio.twiml.MessagingResponse();
-    twiml.message(reply);
-    res.setHeader('Content-Type', 'text/xml');
-    res.status(200).send(twiml.toString());
+    responder(data.content[0].text);
   } catch (e) {
-    const twiml = new twilio.twiml.MessagingResponse();
-    twiml.message('Lo siento, hubo un error. Llámanos al 966 20 21 22.');
-    res.setHeader('Content-Type', 'text/xml');
-    res.status(200).send(twiml.toString());
+    responder('Lo siento, hubo un error. Llámanos al 966 20 21 22.');
   }
 };
