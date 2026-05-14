@@ -8,7 +8,7 @@ function estaAbierto() {
   const hora = ahora.getHours();
   if (dia === 0 || dia === 6) return false;
   if (dia === 5) return hora >= 8 && hora < 18;
-  return hora >= 8 && hora < 7;
+  return hora >= 8 && hora < 20;
 }
 
 module.exports = async function handler(req, res) {
