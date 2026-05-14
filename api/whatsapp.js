@@ -8,7 +8,7 @@ function estaAbierto() {
 
   if (dia === 0 || dia === 6) return false; // sábado y domingo cerrado
   if (dia === 5) return hora >= 8 && hora < 18; // viernes hasta 18h
-  return hora >= 8 && hora < 7; // lunes a jueves hasta 20h
+  return hora >= 8 && hora < 20; // lunes a jueves hasta 20h
 }
 
 module.exports = async function handler(req, res) {
@@ -29,7 +29,14 @@ module.exports = async function handler(req, res) {
     res.status(200).send(twiml.toString());
   }
 if (!estaAbierto()) {
-  return responder('Ahora mismo estamos cerrados. Nuestro horario es lunes a jueves de 8:00 a 20:00, viernes de 8:00 a 18:00. He anotado tu mensaje y te contactaremos en cuanto abramos. También puedes llamarnos al 966 20 21 22.');
+  if (conv.paso === 'nombre' || conv.paso === 'telefono' || conv.paso === 'servicio' || conv.paso === 'dia' || conv.paso === 'hora') {
+    // Si está en medio de pedir cita, que continúe
+  } else if (msg.includes('cita') || msg.includes('reservar') || msg.includes('pedir')) {
+    conv.paso = 'nombre';
+    return responder('Ahora estamos cerrados, pero puedes dejar tu solicitud y te confirmamos en cuanto abramos. ¿Cuál es tu nombre completo?');
+  } else {
+    return responder('Ahora mismo estamos cerrados. Horario: lunes a jueves 8:00–20:00, viernes 8:00–18:00. Si quieres puedes pedir cita escribiendo "cita" y te confirmamos mañana. También puedes llamarnos al 966 20 21 22.');
+  }
 }
   const msg = userMessage.toLowerCase();
 
