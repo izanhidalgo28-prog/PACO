@@ -8,7 +8,7 @@ function estaAbierto() {
 
   if (dia === 0 || dia === 6) return false; // sábado y domingo cerrado
   if (dia === 5) return hora >= 8 && hora < 18; // viernes hasta 18h
-  return hora >= 8 && hora < 20; // lunes a jueves hasta 20h
+  return hora >= 8 && hora < 7; // lunes a jueves hasta 20h
 }
 
 module.exports = async function handler(req, res) {
