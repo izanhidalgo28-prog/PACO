@@ -1,6 +1,15 @@
 const twilio = require('twilio');
 
 const conversaciones = {};
+function estaAbierto() {
+  const ahora = new Date();
+  const dia = ahora.getDay(); // 0=domingo, 1=lunes... 5=viernes, 6=sábado
+  const hora = ahora.getHours();
+
+  if (dia === 0 || dia === 6) return false; // sábado y domingo cerrado
+  if (dia === 5) return hora >= 8 && hora < 18; // viernes hasta 18h
+  return hora >= 8 && hora < 20; // lunes a jueves hasta 20h
+}
 
 module.exports = async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end();
@@ -19,7 +28,9 @@ module.exports = async function handler(req, res) {
     res.setHeader('Content-Type', 'text/xml');
     res.status(200).send(twiml.toString());
   }
-
+if (!estaAbierto()) {
+  return responder('Ahora mismo estamos cerrados. Nuestro horario es lunes a jueves de 8:00 a 20:00, viernes de 8:00 a 18:00. He anotado tu mensaje y te contactaremos en cuanto abramos. También puedes llamarnos al 966 20 21 22.');
+}
   const msg = userMessage.toLowerCase();
 
   // Flujo de cita
