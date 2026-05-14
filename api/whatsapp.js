@@ -1,14 +1,14 @@
 const twilio = require('twilio');
 
 const conversaciones = {};
+
 function estaAbierto() {
   const ahora = new Date();
-  const dia = ahora.getDay(); // 0=domingo, 1=lunes... 5=viernes, 6=sábado
+  const dia = ahora.getDay();
   const hora = ahora.getHours();
-
-  if (dia === 0 || dia === 6) return false; // sábado y domingo cerrado
-  if (dia === 5) return hora >= 8 && hora < 18; // viernes hasta 18h
-  return hora >= 8 && hora < 7; // lunes a jueves hasta 20h
+  if (dia === 0 || dia === 6) return false;
+  if (dia === 5) return hora >= 8 && hora < 18;
+  return hora >= 8 && hora < 20;
 }
 
 module.exports = async function handler(req, res) {
@@ -28,19 +28,18 @@ module.exports = async function handler(req, res) {
     res.setHeader('Content-Type', 'text/xml');
     res.status(200).send(twiml.toString());
   }
-if (!estaAbierto()) {
-  if (conv.paso === 'nombre' || conv.paso === 'telefono' || conv.paso === 'servicio' || conv.paso === 'dia' || conv.paso === 'hora') {
-    // Si está en medio de pedir cita, que continúe
-  } else if (msg.includes('cita') || msg.includes('reservar') || msg.includes('pedir')) {
-    conv.paso = 'nombre';
-    return responder('Ahora estamos cerrados, pero puedes dejar tu solicitud y te confirmamos en cuanto abramos. ¿Cuál es tu nombre completo?');
-  } else {
-    return responder('Ahora mismo estamos cerrados. Horario: lunes a jueves 8:00–20:00, viernes 8:00–18:00. Si quieres puedes pedir cita escribiendo "cita" y te confirmamos mañana. También puedes llamarnos al 966 20 21 22.');
-  }
-}
-  const msg = userMessage.toLowerCase();
 
-  // Flujo de cita
+  const msg = userMessage.toLowerCase();
+  const enFlujoDeСita = ['nombre','telefono','servicio','dia','hora'].includes(conv.paso);
+
+  if (!estaAbierto() && !enFlujoDeСita) {
+    if (msg.includes('cita') || msg.includes('reservar') || msg.includes('pedir')) {
+      conv.paso = 'nombre';
+      return responder('Ahora estamos cerrados, pero puedes dejar tu solicitud y te confirmamos cuando abramos. ¿Cuál es tu nombre completo?');
+    }
+    return responder('Ahora mismo estamos cerrados. Horario: lunes a jueves 8:00–20:00, viernes 8:00–18:00. Escribe "cita" para dejar tu solicitud y te confirmamos mañana. También puedes llamarnos al 966 20 21 22.');
+  }
+
   if (conv.paso === 'nombre') {
     conv.nombre = userMessage;
     conv.paso = 'telefono';
@@ -81,13 +80,11 @@ if (!estaAbierto()) {
     return responder(`Perfecto ${conv.nombre}, tu cita de ${conv.servicio} para el ${conv.dia} por la ${conv.hora} ha sido registrada. Te llamaremos al ${conv.telefono} para confirmar. ¡Hasta pronto!`);
   }
 
-  // Detectar intención de cita
   if (msg.includes('cita') || msg.includes('reservar') || msg.includes('pedir')) {
     conv.paso = 'nombre';
     return responder('Perfecto, vamos a pedir tu cita. ¿Cuál es tu nombre completo?');
   }
 
-  // IA para todo lo demás
   const system = `Eres el asistente virtual de Clínica Vicente Pascual, especializada en Fisioterapia, Osteopatía y Podología en Av. Alicante nº46, Elche. Teléfono: 966 20 21 22. Responde en español, sé amable y conciso. Máximo 3 oraciones. No des diagnósticos médicos. Si alguien quiere pedir cita dile que escriba la palabra "cita".`;
 
   try {
