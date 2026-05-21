@@ -67,9 +67,8 @@ module.exports = async function handler(req, res) {
     conv.paso = null;
 
     await fetch(SHEETS_URL, {
-      method: 'POST',
-      mode: 'no-cors',
-      headers: { 'Content-Type': 'application/json' },
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         nombre: conv.nombre,
         telefono: conv.telefono,
