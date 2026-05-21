@@ -3,170 +3,1152 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Chatbot Clínica Demo</title>
+<title>PACO — Asistente Virtual · Clínica Vicente Pascual</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
-*{margin:0;padding:0;box-sizing:border-box}
-body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f0f4ff;min-height:100vh;display:flex;align-items:center;justify-content:center}
-.hero{text-align:center;padding:40px 20px}
-.hero h1{font-size:28px;color:#185FA5;margin-bottom:12px}
-.hero p{font-size:16px;color:#555;margin-bottom:8px}
-.arrow{font-size:48px;margin-top:30px;animation:bounce 1.5s infinite}
-@keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(10px)}}
+:root {
+  --teal: #1a6b6b;
+  --teal-light: #2a9090;
+  --teal-dark: #0d4444;
+  --gold: #c8a96e;
+  --cream: #faf8f5;
+  --white: #ffffff;
+  --text: #1a1a1a;
+  --text-muted: #6b6b6b;
+  --border: #e8e2d9;
+}
 
-#cb-bubble{position:fixed;bottom:28px;right:28px;width:60px;height:60px;border-radius:50%;background:#185FA5;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 20px rgba(24,95,165,.5);z-index:9999;transition:transform .2s}
-#cb-bubble:hover{transform:scale(1.1)}
-#cb-bubble svg{width:28px;height:28px;fill:white}
-#cb-box{position:fixed;bottom:100px;right:28px;width:340px;height:500px;background:#fff;border-radius:16px;box-shadow:0 8px 40px rgba(0,0,0,.2);z-index:9998;display:none;flex-direction:column;overflow:hidden}
-#cb-box.open{display:flex}
-#cb-head{background:#185FA5;padding:14px 16px;display:flex;align-items:center;gap:10px;flex-shrink:0}
-.h-av{width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center}
-.h-av svg{width:20px;height:20px;fill:white}
-.h-info .nm{color:#fff;font-size:14px;font-weight:600;margin:0}
-.h-info .st{color:rgba(255,255,255,.75);font-size:11px;margin:2px 0 0}
-#cb-close{margin-left:auto;background:none;border:none;color:#fff;font-size:24px;cursor:pointer;line-height:1;padding:0}
-#cb-msgs{flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:8px;background:#f5f7ff}
-.msg{max-width:83%;display:flex;flex-direction:column;gap:2px}
-.msg.b{align-self:flex-start}.msg.u{align-self:flex-end}
-.bbl{padding:9px 13px;border-radius:14px;font-size:13.5px;line-height:1.5}
-.msg.b .bbl{background:#fff;border:1px solid #e0e8f5;color:#1a1a1a;border-bottom-left-radius:3px}
-.msg.u .bbl{background:#185FA5;color:#fff;border-bottom-right-radius:3px}
-.tm{font-size:10px;color:#aab;padding:0 3px}
-.msg.b .tm{align-self:flex-start}.msg.u .tm{align-self:flex-end}
-#cb-qr{padding:8px 12px 5px;display:flex;flex-wrap:wrap;gap:5px;background:#fff;border-top:1px solid #eef;flex-shrink:0}
-.qb{background:none;border:1.5px solid #185FA5;color:#185FA5;border-radius:20px;padding:5px 11px;font-size:12px;cursor:pointer;font-family:inherit}
-.qb:hover{background:#eaf2ff}
-#cb-form{display:flex;gap:8px;padding:10px 12px;background:#fff;border-top:1px solid #eef;flex-shrink:0}
-#cb-input{flex:1;border:1.5px solid #dde3f0;border-radius:20px;padding:8px 14px;font-size:13px;outline:none;font-family:inherit}
-#cb-input:focus{border-color:#185FA5}
-#cb-send{background:#185FA5;color:#fff;border:none;border-radius:50%;width:38px;height:38px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0}
-#cb-send:hover{background:#0C447C}
-#cb-send svg{width:16px;height:16px;fill:white}
-.dot{width:6px;height:6px;border-radius:50%;background:#bbb;animation:dt 1.2s infinite;display:inline-block;margin:0 2px}
-.dot:nth-child(2){animation-delay:.2s}.dot:nth-child(3){animation-delay:.4s}
-@keyframes dt{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-6px)}}
+* { margin:0; padding:0; box-sizing:border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--cream);
+  color: var(--text);
+  overflow-x: hidden;
+}
+
+/* ── HERO ── */
+.hero {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  position: relative;
+  overflow: hidden;
+}
+
+.hero-left {
+  background: var(--teal-dark);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 80px 60px;
+  position: relative;
+  z-index: 1;
+}
+
+.hero-left::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at 30% 50%, rgba(200,169,110,0.08) 0%, transparent 60%);
+  pointer-events: none;
+}
+
+.hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(200,169,110,0.15);
+  border: 1px solid rgba(200,169,110,0.3);
+  border-radius: 100px;
+  padding: 6px 16px;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-bottom: 32px;
+  width: fit-content;
+  animation: fadeUp .6s ease both;
+}
+
+.hero-badge span {
+  width: 6px;
+  height: 6px;
+  background: var(--gold);
+  border-radius: 50%;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%,100% { opacity:1; transform:scale(1); }
+  50% { opacity:.5; transform:scale(1.4); }
+}
+
+.hero-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: clamp(42px, 5vw, 64px);
+  font-weight: 300;
+  line-height: 1.1;
+  color: var(--white);
+  margin-bottom: 24px;
+  animation: fadeUp .7s .1s ease both;
+}
+
+.hero-title em {
+  font-style: italic;
+  color: var(--gold);
+}
+
+.hero-desc {
+  font-size: 16px;
+  line-height: 1.7;
+  color: rgba(255,255,255,0.65);
+  max-width: 440px;
+  margin-bottom: 48px;
+  animation: fadeUp .7s .2s ease both;
+}
+
+.hero-stats {
+  display: flex;
+  gap: 40px;
+  margin-bottom: 48px;
+  animation: fadeUp .7s .3s ease both;
+}
+
+.hero-stat .n {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 36px;
+  font-weight: 600;
+  color: var(--gold);
+  line-height: 1;
+}
+
+.hero-stat .l {
+  font-size: 12px;
+  color: rgba(255,255,255,0.5);
+  margin-top: 4px;
+}
+
+.hero-cta {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+  animation: fadeUp .7s .4s ease both;
+}
+
+.btn-primary {
+  background: var(--gold);
+  color: var(--teal-dark);
+  border: none;
+  border-radius: 8px;
+  padding: 14px 28px;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all .2s;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-primary:hover {
+  background: #d4b87a;
+  transform: translateY(-1px);
+  box-shadow: 0 8px 24px rgba(200,169,110,0.3);
+}
+
+.btn-secondary {
+  background: transparent;
+  color: rgba(255,255,255,0.8);
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 8px;
+  padding: 14px 28px;
+  font-size: 14px;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all .2s;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-secondary:hover {
+  border-color: rgba(255,255,255,0.5);
+  color: white;
+}
+
+.hero-right {
+  background: var(--cream);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 40px;
+  position: relative;
+}
+
+.hero-right::before {
+  content: '';
+  position: absolute;
+  top: -100px;
+  right: -100px;
+  width: 400px;
+  height: 400px;
+  background: radial-gradient(circle, rgba(26,107,107,0.06) 0%, transparent 70%);
+  border-radius: 50%;
+}
+
+.phone-mockup {
+  width: 280px;
+  background: #1a1a1a;
+  border-radius: 40px;
+  padding: 16px;
+  box-shadow: 0 40px 80px rgba(0,0,0,0.2), 0 0 0 1px rgba(255,255,255,0.1);
+  animation: fadeUp .8s .3s ease both, float 6s ease-in-out infinite;
+  position: relative;
+  z-index: 1;
+}
+
+@keyframes float {
+  0%,100% { transform:translateY(0); }
+  50% { transform:translateY(-12px); }
+}
+
+.phone-screen {
+  background: #f0f0f0;
+  border-radius: 28px;
+  overflow: hidden;
+  height: 520px;
+  display: flex;
+  flex-direction: column;
+}
+
+.phone-header {
+  background: var(--teal);
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.phone-avatar {
+  width: 36px;
+  height: 36px;
+  background: var(--gold);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+.phone-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: white;
+}
+
+.phone-status {
+  font-size: 11px;
+  color: rgba(255,255,255,0.7);
+}
+
+.phone-online {
+  width: 8px;
+  height: 8px;
+  background: #4ade80;
+  border-radius: 50%;
+  margin-left: auto;
+  animation: pulse 2s infinite;
+}
+
+.phone-msgs {
+  flex: 1;
+  padding: 14px 10px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.pm { display:flex; flex-direction:column; }
+.pm.b { align-items:flex-end; }
+.pm.u { align-items:flex-start; }
+
+.pm-bbl {
+  max-width: 85%;
+  padding: 8px 12px;
+  border-radius: 14px;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.pm.b .pm-bbl {
+  background: var(--teal);
+  color: white;
+  border-bottom-right-radius: 3px;
+}
+
+.pm.u .pm-bbl {
+  background: white;
+  color: #333;
+  border-bottom-left-radius: 3px;
+}
+
+.pm-time {
+  font-size: 10px;
+  color: #999;
+  margin-top: 2px;
+  padding: 0 4px;
+}
+
+.typing-indicator {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 10px 12px;
+  background: white;
+  border-radius: 14px;
+  border-bottom-left-radius: 3px;
+  width: fit-content;
+}
+
+.typing-indicator span {
+  width: 6px;
+  height: 6px;
+  background: #aaa;
+  border-radius: 50%;
+  animation: typing 1.2s infinite;
+}
+
+.typing-indicator span:nth-child(2) { animation-delay: .2s; }
+.typing-indicator span:nth-child(3) { animation-delay: .4s; }
+
+@keyframes typing {
+  0%,60%,100% { transform:translateY(0); opacity:.4; }
+  30% { transform:translateY(-4px); opacity:1; }
+}
+
+.phone-input {
+  background: white;
+  padding: 10px 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-top: 1px solid #e8e8e8;
+}
+
+.phone-input-field {
+  flex: 1;
+  background: #f5f5f5;
+  border-radius: 20px;
+  padding: 7px 14px;
+  font-size: 12px;
+  color: #333;
+}
+
+.phone-send {
+  width: 32px;
+  height: 32px;
+  background: var(--teal);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.phone-send svg { fill: white; width:14px; height:14px; }
+
+@keyframes fadeUp {
+  from { opacity:0; transform:translateY(20px); }
+  to { opacity:1; transform:translateY(0); }
+}
+
+/* ── FEATURES ── */
+.features {
+  padding: 100px 60px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.section-label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--teal);
+  margin-bottom: 16px;
+}
+
+.section-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: clamp(32px, 4vw, 48px);
+  font-weight: 300;
+  line-height: 1.2;
+  color: var(--text);
+  margin-bottom: 60px;
+  max-width: 600px;
+}
+
+.section-title em {
+  font-style: italic;
+  color: var(--teal);
+}
+
+.features-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+}
+
+.feature-card {
+  background: var(--white);
+  border-radius: 16px;
+  padding: 32px;
+  border: 1px solid var(--border);
+  transition: all .3s;
+  position: relative;
+  overflow: hidden;
+}
+
+.feature-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, var(--teal), var(--gold));
+  opacity: 0;
+  transition: opacity .3s;
+}
+
+.feature-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 40px rgba(0,0,0,0.08);
+  border-color: transparent;
+}
+
+.feature-card:hover::before { opacity: 1; }
+
+.feature-icon {
+  width: 48px;
+  height: 48px;
+  background: rgba(26,107,107,0.08);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  margin-bottom: 20px;
+}
+
+.feature-title {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 10px;
+  color: var(--text);
+}
+
+.feature-desc {
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--text-muted);
+}
+
+/* ── HOW IT WORKS ── */
+.how {
+  background: var(--teal-dark);
+  padding: 100px 60px;
+  position: relative;
+  overflow: hidden;
+}
+
+.how::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at 80% 50%, rgba(200,169,110,0.05) 0%, transparent 60%);
+}
+
+.how-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  position: relative;
+}
+
+.how .section-label { color: var(--gold); }
+.how .section-title { color: white; }
+
+.steps {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 32px;
+  margin-top: 60px;
+}
+
+.step {
+  position: relative;
+}
+
+.step-num {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 64px;
+  font-weight: 300;
+  color: rgba(200,169,110,0.15);
+  line-height: 1;
+  margin-bottom: -10px;
+}
+
+.step-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: white;
+  margin-bottom: 10px;
+}
+
+.step-desc {
+  font-size: 13px;
+  line-height: 1.6;
+  color: rgba(255,255,255,0.5);
+}
+
+.step-line {
+  position: absolute;
+  top: 28px;
+  right: -16px;
+  width: 32px;
+  height: 1px;
+  background: rgba(200,169,110,0.3);
+}
+
+.step:last-child .step-line { display:none; }
+
+/* ── DEMO SECTION ── */
+.demo-section {
+  padding: 100px 60px;
+  max-width: 1200px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 80px;
+  align-items: center;
+}
+
+.demo-text .section-title { margin-bottom: 24px; }
+
+.demo-text p {
+  font-size: 15px;
+  line-height: 1.7;
+  color: var(--text-muted);
+  margin-bottom: 32px;
+}
+
+.demo-feature {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.demo-feature-dot {
+  width: 20px;
+  height: 20px;
+  background: rgba(26,107,107,0.1);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.demo-feature-dot::after {
+  content: '';
+  width: 7px;
+  height: 7px;
+  background: var(--teal);
+  border-radius: 50%;
+}
+
+.demo-feature-text {
+  font-size: 14px;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+/* ── CHATBOT ── */
+#cb-bubble {
+  position: fixed;
+  bottom: 28px;
+  right: 28px;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: var(--teal);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8px 32px rgba(26,107,107,0.4);
+  z-index: 9999;
+  transition: transform .2s, box-shadow .2s;
+}
+
+#cb-bubble:hover {
+  transform: scale(1.08);
+  box-shadow: 0 12px 40px rgba(26,107,107,0.5);
+}
+
+#cb-bubble svg { width:26px; height:26px; fill:white; }
+
+#cb-box {
+  position: fixed;
+  bottom: 100px;
+  right: 28px;
+  width: 360px;
+  height: 520px;
+  background: white;
+  border-radius: 20px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+  display: none;
+  flex-direction: column;
+  overflow: hidden;
+  z-index: 9998;
+  transform: scale(.95) translateY(10px);
+  opacity: 0;
+  transition: all .25s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+#cb-box.open {
+  display: flex;
+  transform: scale(1) translateY(0);
+  opacity: 1;
+}
+
+#cb-head {
+  background: var(--teal);
+  padding: 16px 18px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.h-av {
+  width: 38px;
+  height: 38px;
+  background: var(--gold);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.h-info { flex:1; }
+.h-info .nm { font-size:14px; font-weight:600; color:white; }
+.h-info .st { font-size:11px; color:rgba(255,255,255,0.7); }
+
+#cb-close {
+  margin-left: auto;
+  background: none;
+  border: none;
+  color: rgba(255,255,255,0.7);
+  font-size: 20px;
+  cursor: pointer;
+  line-height:1;
+  padding: 0;
+}
+
+#cb-msgs {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: #f7f7f7;
+}
+
+#cb-msgs::-webkit-scrollbar { width:4px; }
+#cb-msgs::-webkit-scrollbar-thumb { background:#ddd; border-radius:4px; }
+
+#cb-qr {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 8px 14px;
+  background: #f7f7f7;
+  border-top: 1px solid #eee;
+}
+
+.qb {
+  background: none;
+  border: 1.5px solid var(--teal);
+  border-radius: 20px;
+  padding: 5px 12px;
+  font-size: 12px;
+  color: var(--teal);
+  cursor: pointer;
+  font-family: inherit;
+  transition: all .15s;
+}
+
+.qb:hover { background:var(--teal); color:white; }
+
+#cb-form {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 14px;
+  background: white;
+  border-top: 1px solid #eee;
+}
+
+#cb-input {
+  flex: 1;
+  border: 1.5px solid #e8e8e8;
+  border-radius: 20px;
+  padding: 8px 16px;
+  font-size: 13px;
+  font-family: inherit;
+  outline: none;
+  transition: border-color .2s;
+}
+
+#cb-input:focus { border-color: var(--teal); }
+
+#cb-send {
+  width: 38px;
+  height: 38px;
+  background: var(--teal);
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background .2s;
+  flex-shrink: 0;
+}
+
+#cb-send:hover { background: var(--teal-light); }
+#cb-send svg { fill:white; width:16px; height:16px; }
+
+.msg { display:flex; flex-direction:column; }
+.msg.b { align-items:flex-end; }
+.msg.u { align-items:flex-start; }
+
+.bbl {
+  max-width: 82%;
+  padding: 9px 13px;
+  border-radius: 16px;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.msg.b .bbl {
+  background: var(--teal);
+  color: white;
+  border-bottom-right-radius: 4px;
+}
+
+.msg.u .bbl {
+  background: white;
+  color: #333;
+  border-bottom-left-radius: 4px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+}
+
+.tm { font-size:10px; color:#aaa; margin-top:3px; padding:0 4px; }
+
+.dot {
+  width:7px; height:7px; border-radius:50%;
+  background:#bbb; animation:dt 1.2s infinite;
+  display:inline-block; margin:0 2px;
+}
+.dot:nth-child(2){animation-delay:.2s}
+.dot:nth-child(3){animation-delay:.4s}
+@keyframes dt{0%,60%,100%{transform:translateY(0);opacity:.4}30%{transform:translateY(-5px);opacity:1}}
+
+/* ── FOOTER ── */
+.footer {
+  background: var(--teal-dark);
+  padding: 60px;
+  text-align: center;
+}
+
+.footer-brand {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 28px;
+  color: var(--gold);
+  margin-bottom: 12px;
+}
+
+.footer-text {
+  font-size: 13px;
+  color: rgba(255,255,255,0.4);
+}
+
+/* ── RESPONSIVE ── */
+@media (max-width: 900px) {
+  .hero { grid-template-columns: 1fr; }
+  .hero-right { display:none; }
+  .hero-left { padding:60px 32px; min-height:100vh; }
+  .features { padding:60px 24px; }
+  .features-grid { grid-template-columns:1fr; }
+  .how { padding:60px 24px; }
+  .steps { grid-template-columns:1fr 1fr; }
+  .demo-section { grid-template-columns:1fr; padding:60px 24px; gap:40px; }
+  .footer { padding:40px 24px; }
+  #cb-box { width:calc(100vw - 32px); right:16px; bottom:90px; }
+}
 </style>
 </head>
 <body>
 
-<div class="hero">
-  <h1>Chatbot para Clínicas</h1>
-  <p>Asistente virtual con IA — disponible 24/7</p>
-  <p style="color:#185FA5;font-weight:600">Haz clic en el botón azul ↘</p>
-  <div class="arrow">👇</div>
-</div>
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-left">
+    <div class="hero-badge"><span></span> Inteligencia Artificial · Atención 24/7</div>
+    <h1 class="hero-title">
+      Tu clínica atiende<br>
+      <em>mientras tú descansas</em>
+    </h1>
+    <p class="hero-desc">
+      PACO es el asistente virtual de Clínica Vicente Pascual. Responde dudas, agenda citas y gestiona pacientes automáticamente — día y noche, sin esperas.
+    </p>
+    <div class="hero-stats">
+      <div class="hero-stat">
+        <div class="n">24/7</div>
+        <div class="l">Disponible</div>
+      </div>
+      <div class="hero-stat">
+        <div class="n">&lt;3s</div>
+        <div class="l">Respuesta</div>
+      </div>
+      <div class="hero-stat">
+        <div class="n">100%</div>
+        <div class="l">Automatizado</div>
+      </div>
+    </div>
+    <div class="hero-cta">
+      <a href="#demo" class="btn-primary">💬 Probar PACO ahora</a>
+      <a href="#features" class="btn-secondary">Ver funciones →</a>
+    </div>
+  </div>
+  <div class="hero-right">
+    <div class="phone-mockup">
+      <div class="phone-screen">
+        <div class="phone-header">
+          <div class="phone-avatar">🏥</div>
+          <div>
+            <div class="phone-name">PACO · C. Vicente Pascual</div>
+            <div class="phone-status">En línea ahora</div>
+          </div>
+          <div class="phone-online"></div>
+        </div>
+        <div class="phone-msgs">
+          <div class="pm b">
+            <div class="pm-bbl">Hola, quiero pedir cita para fisioterapia</div>
+            <div class="pm-time">10:42</div>
+          </div>
+          <div class="pm u">
+            <div class="pm-bbl">¡Hola! Soy PACO 👋 Te ayudo con tu cita. ¿Para qué día te viene bien?</div>
+            <div class="pm-time">10:42</div>
+          </div>
+          <div class="pm b">
+            <div class="pm-bbl">El jueves por la mañana</div>
+            <div class="pm-time">10:43</div>
+          </div>
+          <div class="pm u">
+            <div class="pm-bbl">Perfecto, tengo disponible jueves a las 9:30 y 11:00h. ¿Cuál prefieres?</div>
+            <div class="pm-time">10:43</div>
+          </div>
+          <div class="pm b">
+            <div class="pm-bbl">Las 9:30</div>
+            <div class="pm-time">10:43</div>
+          </div>
+          <div class="pm u">
+            <div class="typing-indicator">
+              <span></span><span></span><span></span>
+            </div>
+          </div>
+        </div>
+        <div class="phone-input">
+          <div class="phone-input-field">Escribe un mensaje...</div>
+          <div class="phone-send">
+            <svg viewBox="0 0 24 24"><path d="M2 21l21-9L2 3v7l15 2-15 2z"/></svg>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
 
-<div id="cb-bubble">
-  <svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 10H6V10h12v2zm0-3H6V7h12v2z"/></svg>
+<!-- FEATURES -->
+<section class="features" id="features">
+  <div class="section-label">Funcionalidades</div>
+  <h2 class="section-title">Todo lo que tu clínica<br><em>necesita automatizar</em></h2>
+  <div class="features-grid">
+    <div class="feature-card">
+      <div class="feature-icon">🗓️</div>
+      <div class="feature-title">Agenda de citas automática</div>
+      <div class="feature-desc">Los pacientes reservan, modifican y cancelan citas directamente por WhatsApp o web, sin que nadie intervenga.</div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🔔</div>
+      <div class="feature-title">Recordatorios automáticos</div>
+      <div class="feature-desc">El sistema envía recordatorios por WhatsApp 24h antes de cada cita. Reduce las ausencias hasta un 60%.</div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🧠</div>
+      <div class="feature-title">Respuestas con IA</div>
+      <div class="feature-desc">PACO responde preguntas sobre servicios, precios, horarios y seguros. Entrenado específicamente para tu clínica.</div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">📋</div>
+      <div class="feature-title">Panel de gestión</div>
+      <div class="feature-desc">Visualiza todas las citas, cambia estados y gestiona pacientes desde un panel web limpio y sencillo.</div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">📱</div>
+      <div class="feature-title">Web + WhatsApp</div>
+      <div class="feature-desc">El asistente funciona tanto en tu página web como en WhatsApp. Los pacientes eligen cómo contactar.</div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">⚡</div>
+      <div class="feature-title">Respuesta en segundos</div>
+      <div class="feature-desc">Sin esperas, sin música en espera. PACO responde al instante, a cualquier hora, cualquier día del año.</div>
+    </div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section class="how">
+  <div class="how-inner">
+    <div class="section-label">Cómo funciona</div>
+    <h2 class="section-title">De la consulta a la<br><em>cita en 4 pasos</em></h2>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">01</div>
+        <div class="step-title">El paciente escribe</div>
+        <div class="step-desc">Por WhatsApp o web, el paciente hace su consulta o pide cita en cualquier momento.</div>
+        <div class="step-line"></div>
+      </div>
+      <div class="step">
+        <div class="step-num">02</div>
+        <div class="step-title">PACO responde</div>
+        <div class="step-desc">La IA entiende la consulta y responde con la información exacta que necesita el paciente.</div>
+        <div class="step-line"></div>
+      </div>
+      <div class="step">
+        <div class="step-num">03</div>
+        <div class="step-title">Se agenda la cita</div>
+        <div class="step-desc">Si el paciente quiere cita, PACO la registra automáticamente en el panel de la clínica.</div>
+        <div class="step-line"></div>
+      </div>
+      <div class="step">
+        <div class="step-num">04</div>
+        <div class="step-title">Recordatorio enviado</div>
+        <div class="step-desc">24h antes de la cita, el paciente recibe un recordatorio automático por WhatsApp.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- DEMO SECTION -->
+<section class="demo-section" id="demo">
+  <div class="demo-text">
+    <div class="section-label">Demo en vivo</div>
+    <h2 class="section-title">Habla con PACO<br><em>ahora mismo</em></h2>
+    <p>Prueba el asistente tal y como lo verían los pacientes de tu clínica. Haz preguntas, pide información sobre servicios o simula agendar una cita.</p>
+    <div class="demo-feature">
+      <div class="demo-feature-dot"></div>
+      <div class="demo-feature-text">Pregunta por los servicios, precios o seguros aceptados</div>
+    </div>
+    <div class="demo-feature">
+      <div class="demo-feature-dot"></div>
+      <div class="demo-feature-text">Simula agendar una cita de fisioterapia o podología</div>
+    </div>
+    <div class="demo-feature">
+      <div class="demo-feature-dot"></div>
+      <div class="demo-feature-text">Comprueba la velocidad y naturalidad de las respuestas</div>
+    </div>
+    <div style="margin-top:32px">
+      <button class="btn-primary" onclick="abrirChat()">💬 Abrir PACO →</button>
+    </div>
+  </div>
+  <div style="background:var(--white);border-radius:20px;padding:40px;border:1px solid var(--border);text-align:center;">
+    <div style="font-size:48px;margin-bottom:16px;">🏥</div>
+    <div style="font-family:'Cormorant Garamond',serif;font-size:22px;color:var(--teal-dark);margin-bottom:8px;">Clínica Vicente Pascual</div>
+    <div style="font-size:13px;color:var(--text-muted);margin-bottom:24px;">Fisioterapia · Podología · Rehabilitación</div>
+    <div style="display:flex;flex-direction:column;gap:10px;text-align:left;">
+      <div style="display:flex;gap:10px;align-items:center;font-size:13px;color:var(--text-muted);">
+        <span>🕐</span> Lunes a Viernes 8am–8pm, Sáb 9am–2pm
+      </div>
+      <div style="display:flex;gap:10px;align-items:center;font-size:13px;color:var(--text-muted);">
+        <span>📞</span> 966 20 21 22
+      </div>
+      <div style="display:flex;gap:10px;align-items:center;font-size:13px;color:var(--text-muted);">
+        <span>💳</span> GNP, AXA, MetLife y más
+      </div>
+    </div>
+    <div style="margin-top:24px;padding-top:24px;border-top:1px solid var(--border);">
+      <div style="font-size:12px;color:var(--text-muted);margin-bottom:12px;">Responde preguntas sobre:</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;justify-content:center;">
+        <span style="background:rgba(26,107,107,0.08);color:var(--teal);border-radius:20px;padding:4px 12px;font-size:11px;">Servicios</span>
+        <span style="background:rgba(26,107,107,0.08);color:var(--teal);border-radius:20px;padding:4px 12px;font-size:11px;">Precios</span>
+        <span style="background:rgba(26,107,107,0.08);color:var(--teal);border-radius:20px;padding:4px 12px;font-size:11px;">Horarios</span>
+        <span style="background:rgba(26,107,107,0.08);color:var(--teal);border-radius:20px;padding:4px 12px;font-size:11px;">Seguros</span>
+        <span style="background:rgba(26,107,107,0.08);color:var(--teal);border-radius:20px;padding:4px 12px;font-size:11px;">Citas</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer class="footer">
+  <div class="footer-brand">PACO</div>
+  <div class="footer-text">Asistente virtual para Clínica Vicente Pascual · Powered by IA</div>
+</footer>
+
+<!-- CHATBOT -->
+<div id="cb-bubble" onclick="toggleChat()">
+  <svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/></svg>
 </div>
 
 <div id="cb-box">
   <div id="cb-head">
-    <div class="h-av"><svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/></svg></div>
+    <div class="h-av">🏥</div>
     <div class="h-info">
-      <p class="nm">ClínicaSalud</p>
-      <p class="st">En línea · responde al instante</p>
+      <div class="nm">PACO · Clínica V. Pascual</div>
+      <div class="st">En línea · responde al instante</div>
     </div>
-    <button id="cb-close">&times;</button>
+    <button id="cb-close" onclick="toggleChat()">×</button>
   </div>
   <div id="cb-msgs"></div>
   <div id="cb-qr"></div>
   <div id="cb-form">
     <input id="cb-input" type="text" placeholder="Escribe tu mensaje..."/>
-    <button id="cb-send"><svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg></button>
+    <button id="cb-send">
+      <svg viewBox="0 0 24 24"><path d="M2 21l21-9L2 3v7l15 2-15 2z"/></svg>
+    </button>
   </div>
 </div>
 
 <script>
-var INFO={
-  nombre:'ClínicaSalud',
-  especialidades:'Medicina general, Cardiología, Dermatología, Pediatría, Ginecología, Psicología',
-  horarios:'Lunes a Viernes 8am–8pm, Sábados 9am–2pm',
-  telefono:'800-000-0000',
-  precios:'Consulta general $350, Especialistas desde $450',
-  seguros:'IMSS, ISSSTE, GNP, AXA, Metlife'
+var INFO = {
+  nombre: 'Clínica Vicente Pascual',
+  especialidades: 'Fisioterapia, Podología, Rehabilitación, Osteopatía',
+  horarios: 'Lunes a Viernes 8am-8pm, Sábados 9am-2pm',
+  telefono: '966 20 21 22',
+  precios: 'Consulta general desde 35€, Fisioterapia desde 40€',
+  seguros: 'GNP, AXA, MetLife, Mapfre'
 };
-var QR=['Agendar una cita','Ver especialidades','Horarios y costos','Hablar con alguien'];
-var chatHistory=[],busy=false,started=false;
+var QR = ['Pedir cita','Ver servicios','Horarios y precios','Seguros aceptados'];
+var chatHistory = [], busy = false, started = false;
 
-function now(){return new Date().toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'})}
-
-function addMsg(txt,who){
-  var m=document.getElementById('cb-msgs'),d=document.createElement('div');
-  d.className='msg '+who;
-  d.innerHTML='<div class="bbl">'+txt+'</div><span class="tm">'+now()+'</span>';
-  m.appendChild(d);m.scrollTop=m.scrollHeight;
+function now() {
+  return new Date().toLocaleTimeString('es-MX', {hour:'2-digit', minute:'2-digit'});
 }
 
-function showTyping(){
-  var m=document.getElementById('cb-msgs'),d=document.createElement('div');
-  d.className='msg b';d.id='typing';
-  d.innerHTML='<div class="bbl"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>';
-  m.appendChild(d);m.scrollTop=m.scrollHeight;
+function addMsg(txt, who) {
+  var m = document.getElementById('cb-msgs');
+  var d = document.createElement('div');
+  d.className = 'msg ' + who;
+  d.innerHTML = '<div class="bbl">' + txt + '</div><span class="tm">' + now() + '</span>';
+  m.appendChild(d);
+  m.scrollTop = m.scrollHeight;
 }
-function hideTyping(){var e=document.getElementById('typing');if(e)e.remove();}
 
-function setQR(){
-  var q=document.getElementById('cb-qr');q.innerHTML='';
-  QR.forEach(function(r){
-    var b=document.createElement('button');b.className='qb';b.textContent=r;
-    b.onclick=function(){doSend(r)};q.appendChild(b);
+function showTyping() {
+  var m = document.getElementById('cb-msgs');
+  var d = document.createElement('div');
+  d.className = 'msg u'; d.id = 'typing';
+  d.innerHTML = '<div class="bbl" style="background:white;box-shadow:0 1px 4px rgba(0,0,0,0.06)"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>';
+  m.appendChild(d); m.scrollTop = m.scrollHeight;
+}
+
+function hideTyping() {
+  var e = document.getElementById('typing');
+  if(e) e.remove();
+}
+
+function setQR() {
+  var q = document.getElementById('cb-qr');
+  q.innerHTML = '';
+  QR.forEach(function(r) {
+    var b = document.createElement('button');
+    b.className = 'qb'; b.textContent = r;
+    b.onclick = function() { doSend(r); };
+    q.appendChild(b);
   });
 }
 
-async function doSend(txt){
-  if(busy||!txt.trim())return;
-  busy=true;
-  document.getElementById('cb-qr').innerHTML='';
-  addMsg(txt,'u');
-  chatHistory.push({role:'user',content:txt});
+async function doSend(txt) {
+  if(busy || !txt.trim()) return;
+  busy = true;
+  document.getElementById('cb-qr').innerHTML = '';
+  addMsg(txt, 'b');
+  chatHistory.push({role:'user', content:txt});
+  document.getElementById('cb-input').value = '';
   showTyping();
-  try{
-    var r=await fetch('/api/chat',{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({messages:chatHistory,clinicInfo:INFO})
+  try {
+    var r = await fetch('/api/chat', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({messages: chatHistory, clinicInfo: INFO})
     });
-    var d=await r.json();
+    var d = await r.json();
     hideTyping();
-    var reply=d.reply||'Lo siento, hubo un error. Intenta de nuevo.';
-    addMsg(reply,'b');
-    chatHistory.push({role:'assistant',content:reply});
-  }catch(e){
+    var reply = d.reply || 'Lo siento, hubo un error. Intenta de nuevo.';
+    addMsg(reply, 'u');
+    chatHistory.push({role:'assistant', content:reply});
+  } catch(e) {
     hideTyping();
-    addMsg('Error de conexión. Por favor intenta de nuevo.','b');
+    addMsg('Error de conexión. Por favor intenta de nuevo.', 'u');
   }
-  busy=false;
+  busy = false;
 }
 
-document.getElementById('cb-bubble').onclick=function(){
-  var box=document.getElementById('cb-box');
-  if(box.classList.contains('open')){
+function toggleChat() {
+  var box = document.getElementById('cb-box');
+  if(box.classList.contains('open')) {
     box.classList.remove('open');
+    setTimeout(function(){ box.style.display='none'; }, 250);
   } else {
-    box.classList.add('open');
-    if(!started){
-      started=true;
-      addMsg('Hola, bienvenido a ClínicaSalud. Soy tu asistente virtual. ¿En qué te puedo ayudar hoy?','b');
-      setQR();
+    box.style.display = 'flex';
+    setTimeout(function(){ box.classList.add('open'); }, 10);
+    if(!started) {
+      started = true;
+      setTimeout(function(){
+        addMsg('¡Hola! Soy PACO 👋 el asistente virtual de Clínica Vicente Pascual. ¿En qué puedo ayudarte hoy?', 'u');
+        setQR();
+      }, 400);
     }
   }
+}
+
+function abrirChat() {
+  var box = document.getElementById('cb-box');
+  if(!box.classList.contains('open')) toggleChat();
+  box.scrollIntoView({behavior:'smooth'});
+}
+
+document.getElementById('cb-send').onclick = function() {
+  doSend(document.getElementById('cb-input').value.trim());
 };
 
-document.getElementById('cb-close').onclick=function(e){
-  e.stopPropagation();
-  document.getElementById('cb-box').classList.remove('open');
-};
-
-document.getElementById('cb-send').onclick=function(){
-  var v=document.getElementById('cb-input').value.trim();
-  if(v){doSend(v);document.getElementById('cb-input').value='';}
-};
-
-document.getElementById('cb-input').onkeydown=function(e){
-  if(e.key==='Enter'){
-    var v=e.target.value.trim();
-    if(v){doSend(v);e.target.value='';}
-  }
+document.getElementById('cb-input').onkeydown = function(e) {
+  if(e.key === 'Enter') doSend(e.target.value.trim());
 };
 </script>
 </body>
