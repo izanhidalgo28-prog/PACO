@@ -21,6 +21,8 @@ module.exports = async function handler(req, res) {
   const conv = conversaciones[from];
 
   const SHEETS_URL = https://script.google.com/macros/s/AKfycbyQDszGP0RlFR_jsjyfyvc4ZVDg7wyHaYp8qkog1Kr-Xcciq8-r0ScXRvAz0CHA1m8aGw/exec ;
+  const TWILIO_SID = AC5dbda67e3e4433d40118fb90a5984ec4;
+  const TWILIO_TOKEN = 6276d0dab9929c69220a58adebc4ed90 ;
 
   function responder(texto) {
     const twiml = new twilio.twiml.MessagingResponse();
