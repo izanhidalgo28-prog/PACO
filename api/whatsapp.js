@@ -20,7 +20,7 @@ module.exports = async function handler(req, res) {
   if (!conversaciones[from]) conversaciones[from] = { paso: null };
   const conv = conversaciones[from];
 
-  const SHEETS_URL = 'https://script.google.com/macros/s/AKfycbxNJTkjcBXCG7JGMWNPy1pqglZiHOwqek8nBUu9xYGB3X0gm-soUohxkEnIKx8opORy/exec';
+  const SHEETS_URL = https://script.google.com/macros/s/AKfycbyQDszGP0RlFR_jsjyfyvc4ZVDg7wyHaYp8qkog1Kr-Xcciq8-r0ScXRvAz0CHA1m8aGw/exec ;
 
   function responder(texto) {
     const twiml = new twilio.twiml.MessagingResponse();
