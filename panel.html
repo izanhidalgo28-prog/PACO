@@ -208,7 +208,12 @@ var PASSWORD = 'vicente2024';
 var todasCitas = [];
 var filtroActual = 'Todas';
 var modalFila = null;
-
+function formatFecha(f) {
+  if (!f) return '—';
+  var d = new Date(f);
+  if (isNaN(d)) return f;
+  return d.toLocaleDateString('es-ES', {day:'2-digit', month:'2-digit', year:'numeric'});
+}
 function entrar() {
   var u = document.getElementById('user').value;
   var p = document.getElementById('pass').value;
@@ -256,7 +261,7 @@ function renderTabla(filtro) {
   }
   tbody.innerHTML = citas.map(function(c) {
     return '<tr style="cursor:pointer" onclick="abrirModal('+c.fila+')">'+
-      '<td class="fecha-cell">'+(c.fecha||'—')+'</td>'+
+      '<td class="fecha-cell">'+formatFecha(c.fecha)+'</td>'+
       '<td class="nombre-cell"><strong>'+(c.nombre||'—')+'</strong></td>'+
       '<td>'+(c.tratamiento||'—')+'</td>'+
       '<td>'+(c.dia||'—')+'</td>'+
