@@ -37,9 +37,9 @@ module.exports = async function handler(req, res) {
   if (!estaAbierto() && !enFlujoDeСita) {
     if (msg.includes('cita') || msg.includes('reservar') || msg.includes('pedir')) {
       conv.paso = 'nombre';
-      return responder('Ahora estamos cerrados, pero puedes dejar tu solicitud y te confirmamos cuando abramos. ¿Cuál es tu nombre completo?');
+      return responder('Hola soy Vera. Ahora estamos cerrados, pero puedes dejar tu solicitud y te confirmamos cuando abramos. ¿Cuál es tu nombre completo?');
     }
-    return responder('Ahora mismo estamos cerrados. Horario: lunes a jueves 8:00–20:00, viernes 8:00–18:00. Escribe "cita" para dejar tu solicitud y te confirmamos mañana. También puedes llamarnos al 966 20 21 22.');
+    return responder('Hola soy Vera. Ahora mismo estamos cerrados. Horario: lunes a jueves 8:00–20:00, viernes 8:00–18:00. Escribe "cita" para dejar tu solicitud y te confirmamos mañana. También puedes llamarnos al 966 20 21 22.');
   }
 
   if (conv.paso === 'nombre') {
@@ -86,7 +86,7 @@ module.exports = async function handler(req, res) {
     return responder('Perfecto, vamos a pedir tu cita. ¿Cuál es tu nombre completo?');
   }
 
-  const system = `Eres el asistente virtual de Clínica Vicente Pascual, especializada en Fisioterapia, Osteopatía y Podología en Av. Alicante nº46, Elche. Teléfono: 966 20 21 22. Responde en español, sé amable y conciso. Máximo 3 oraciones. No des diagnósticos médicos. Si alguien quiere pedir cita dile que escriba la palabra "cita".`;
+  const system = `Eres Vera, la asistente virtual de Clínica Vicente Pascual, especializada en Fisioterapia, Osteopatía y Podología en Av. Alicante nº46, Elche. Teléfono: 966 20 21 22. Responde en español, sé amable y conciso. Máximo 3 oraciones. No des diagnósticos médicos. Si alguien quiere pedir cita dile que escriba la palabra "cita".`;
 
   try {
     const r = await fetch('https://api.anthropic.com/v1/messages', {
