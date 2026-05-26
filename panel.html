@@ -4,73 +4,159 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Panel de Citas — Clínica Vicente Pascual</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
+:root {
+  --teal: #1a6b6b;
+  --teal-light: #2a9090;
+  --teal-dark: #0d4444;
+  --teal-bg: #f0fafa;
+  --gold: #c8a96e;
+  --cream: #faf8f5;
+  --white: #ffffff;
+  --text: #1a1a1a;
+  --text-muted: #6b7b7b;
+  --border: #e0eded;
+  --shadow: 0 2px 12px rgba(13,68,68,.07);
+  --pending-bg: #fffbec; --pending: #b07d00;
+  --confirmed-bg: #edfaf3; --confirmed: #0a6632;
+  --cancelled-bg: #fff0f0; --cancelled: #b02020;
+  --completed-bg: #eef3ff; --completed: #2040a0;
+}
 *{margin:0;padding:0;box-sizing:border-box}
-body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f0f7f4;min-height:100vh}
-#login{display:flex;align-items:center;justify-content:center;min-height:100vh}
-.login-box{background:#fff;border-radius:16px;padding:40px;width:320px;box-shadow:0 4px 20px rgba(0,0,0,.1);text-align:center}
-.login-box h1{color:#1a6b4a;font-size:20px;margin-bottom:8px}
-.login-box p{color:#777;font-size:13px;margin-bottom:24px}
-.login-box input{width:100%;border:1.5px solid #ddd;border-radius:8px;padding:10px 14px;font-size:14px;outline:none;margin-bottom:12px}
-.login-box input:focus{border-color:#1a6b4a}
-.login-box button{width:100%;background:#1a6b4a;color:#fff;border:none;border-radius:8px;padding:11px;font-size:14px;font-weight:600;cursor:pointer}
-.login-box button:hover{background:#0f4a32}
-.error{color:#e74c3c;font-size:12px;margin-top:8px}
-#panel{display:none;padding:20px}
-header{background:#1a6b4a;color:#fff;padding:16px 24px;border-radius:12px;display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
-header h1{font-size:18px}
-header button{background:rgba(255,255,255,.2);color:#fff;border:none;border-radius:8px;padding:6px 14px;cursor:pointer;font-size:13px}
-.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
-.stat{background:#fff;border-radius:12px;padding:16px;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,.06)}
-.stat .n{font-size:28px;font-weight:700;color:#1a6b4a}
-.stat .l{font-size:12px;color:#777;margin-top:4px}
-.filtros{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap}
-.filtro{background:#fff;border:1.5px solid #ddd;border-radius:20px;padding:6px 14px;font-size:12px;cursor:pointer;font-family:inherit}
-.filtro.active{border-color:#1a6b4a;background:#e8f5ee;color:#1a6b4a;font-weight:600}
-table{width:100%;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.06);border-collapse:collapse}
-th{background:#1a6b4a;color:#fff;padding:12px 14px;font-size:12px;font-weight:500;text-align:left}
-td{padding:12px 14px;font-size:13px;border-bottom:1px solid #f0f0f0;color:#333}
-tr:last-child td{border-bottom:none}
-tr:hover td{background:#f9fffe}
-.estado{padding:4px 10px;border-radius:20px;font-size:11px;font-weight:600;display:inline-block}
-.estado.Pendiente{background:#fff3cd;color:#856404}
-.estado.Confirmada{background:#d1e7dd;color:#0a3622}
-.estado.Cancelada{background:#f8d7da;color:#842029}
-.estado.Completada{background:#cfe2ff;color:#084298}
-select.est-sel{border:1px solid #ddd;border-radius:6px;padding:4px 8px;font-size:11px;cursor:pointer;outline:none}
-.refresh{background:#1a6b4a;color:#fff;border:none;border-radius:8px;padding:8px 16px;cursor:pointer;font-size:13px;margin-bottom:16px}
-.vacio{text-align:center;padding:40px;color:#aaa;font-size:14px}
+html{scroll-behavior:smooth}
+body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--text);min-height:100vh}
+
+/* LOGIN */
+#login{display:flex;align-items:center;justify-content:center;min-height:100vh;background:linear-gradient(135deg,#0d4444 0%,#1a6b6b 50%,#2a9090 100%);position:relative;overflow:hidden}
+#login::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 30% 70%,rgba(200,169,110,.1) 0%,transparent 60%)}
+.login-wrap{background:var(--white);border-radius:20px;padding:48px 44px;width:360px;box-shadow:0 32px 80px rgba(0,0,0,.3);position:relative;z-index:1;animation:fadeUp .5s ease both}
+.login-logo{font-family:'Cormorant Garamond',serif;font-size:13px;letter-spacing:.15em;text-transform:uppercase;color:var(--teal);margin-bottom:4px}
+.login-title{font-family:'Cormorant Garamond',serif;font-size:26px;font-weight:400;color:var(--teal-dark);margin-bottom:4px}
+.login-sub{font-size:12px;color:var(--text-muted);margin-bottom:32px}
+.login-wrap label{display:block;font-size:11px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--text-muted);margin-bottom:6px}
+.login-wrap input{width:100%;border:1.5px solid var(--border);border-radius:10px;padding:11px 14px;font-size:14px;font-family:inherit;outline:none;margin-bottom:16px;transition:border-color .2s;color:var(--text)}
+.login-wrap input:focus{border-color:var(--teal)}
+.btn-login{width:100%;background:var(--teal-dark);color:#fff;border:none;border-radius:10px;padding:13px;font-size:14px;font-weight:600;font-family:inherit;cursor:pointer;transition:background .2s;margin-top:4px}
+.btn-login:hover{background:var(--teal)}
+.err{color:#e74c3c;font-size:12px;margin-top:10px;text-align:center}
+
+/* PANEL */
+#panel{display:none}
+.topbar{background:var(--white);border-bottom:1px solid var(--border);padding:0 28px;height:60px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:0 1px 8px rgba(0,0,0,.05)}
+.topbar-left{display:flex;align-items:center;gap:12px}
+.topbar-icon{width:36px;height:36px;background:var(--teal-dark);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px}
+.topbar-brand{font-family:'Cormorant Garamond',serif;font-size:19px;color:var(--teal-dark)}
+.topbar-sub{font-size:11px;color:var(--text-muted);margin-top:1px}
+.topbar-right{display:flex;align-items:center;gap:10px}
+.btn-refresh{background:var(--teal-bg);border:1.5px solid var(--border);border-radius:8px;padding:7px 14px;font-size:13px;font-family:inherit;cursor:pointer;color:var(--teal-dark);transition:all .2s}
+.btn-refresh:hover{border-color:var(--teal);background:#ddf2f2}
+.btn-salir{background:var(--teal-dark);color:#fff;border:none;border-radius:8px;padding:7px 14px;font-size:13px;font-family:inherit;cursor:pointer;transition:background .2s}
+.btn-salir:hover{background:var(--teal)}
+
+/* STATS */
+.stats-bar{display:flex;gap:14px;padding:22px 28px;overflow-x:auto}
+.stat-card{background:var(--white);border-radius:14px;padding:16px 22px;min-width:130px;box-shadow:var(--shadow);border-left:3px solid var(--teal);flex-shrink:0;transition:transform .2s}
+.stat-card:hover{transform:translateY(-2px)}
+.stat-card.pend{border-color:var(--pending)}
+.stat-card.conf{border-color:var(--confirmed)}
+.stat-card.canc{border-color:var(--cancelled)}
+.stat-card.comp{border-color:var(--completed)}
+.stat-n{font-size:28px;font-weight:700;color:var(--text);line-height:1}
+.stat-l{font-size:11px;color:var(--text-muted);margin-top:4px;font-weight:500}
+
+/* FILTERS */
+.filters-bar{display:flex;gap:8px;padding:0 28px 16px;flex-wrap:wrap;align-items:center}
+.filtro{background:var(--white);border:1.5px solid var(--border);border-radius:20px;padding:6px 16px;font-size:12px;font-weight:500;cursor:pointer;font-family:inherit;color:var(--text-muted);transition:all .15s}
+.filtro.active{border-color:var(--teal);background:var(--teal-bg);color:var(--teal-dark);font-weight:600}
+.filtro:hover:not(.active){border-color:var(--teal-light);color:var(--teal)}
+
+/* TABLE */
+.table-wrap{padding:0 28px 32px;overflow-x:auto}
+.citas-table{width:100%;background:var(--white);border-radius:14px;overflow:hidden;box-shadow:var(--shadow);border-collapse:collapse;min-width:800px}
+.citas-table th{background:var(--teal-dark);color:#fff;padding:13px 16px;font-size:11px;font-weight:500;text-align:left;letter-spacing:.04em;text-transform:uppercase}
+.citas-table td{padding:13px 16px;font-size:13px;border-bottom:1px solid var(--border);color:var(--text);vertical-align:middle}
+.citas-table tr:last-child td{border-bottom:none}
+.citas-table tr:hover td{background:var(--teal-bg)}
+.nombre-cell strong{font-weight:600;color:var(--teal-dark)}
+.tel-link{color:var(--teal);text-decoration:none;font-weight:500}
+.tel-link:hover{text-decoration:underline}
+.fecha-cell{font-size:12px;color:var(--text-muted)}
+
+.badge{padding:4px 10px;border-radius:20px;font-size:11px;font-weight:600;display:inline-block}
+.badge.Pendiente{background:var(--pending-bg);color:var(--pending)}
+.badge.Confirmada{background:var(--confirmed-bg);color:var(--confirmed)}
+.badge.Cancelada{background:var(--cancelled-bg);color:var(--cancelled)}
+.badge.Completada{background:var(--completed-bg);color:var(--completed)}
+
+.est-sel{border:1.5px solid var(--border);border-radius:8px;padding:5px 10px;font-size:12px;font-family:inherit;cursor:pointer;outline:none;background:var(--white);color:var(--text);transition:border-color .2s}
+.est-sel:focus{border-color:var(--teal)}
+
+.vacio{text-align:center;padding:48px;color:var(--text-muted);font-size:14px}
+.loading{text-align:center;padding:48px;color:var(--text-muted);font-size:13px}
+
+/* MODAL */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:200;align-items:center;justify-content:center}
+.modal-bg.open{display:flex}
+.modal{background:var(--white);border-radius:18px;padding:30px;width:420px;max-width:95vw;box-shadow:0 24px 60px rgba(0,0,0,.2);position:relative}
+.modal h2{font-family:'Cormorant Garamond',serif;font-size:22px;color:var(--teal-dark);margin-bottom:20px}
+.modal-row{display:flex;gap:10px;margin-bottom:12px}
+.modal-label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--text-muted);min-width:90px;padding-top:2px}
+.modal-val{font-size:13px;color:var(--text);flex:1}
+.modal-sel{width:100%;border:1.5px solid var(--border);border-radius:8px;padding:10px 12px;font-size:13px;font-family:inherit;outline:none;margin-top:16px}
+.modal-sel:focus{border-color:var(--teal)}
+.modal-btns{display:flex;gap:8px;margin-top:20px}
+.btn-guardar{flex:1;background:var(--teal-dark);color:#fff;border:none;border-radius:8px;padding:11px;font-size:13px;font-weight:600;font-family:inherit;cursor:pointer;transition:background .2s}
+.btn-guardar:hover{background:var(--teal)}
+.btn-cancelar{background:var(--cream);color:var(--text);border:1.5px solid var(--border);border-radius:8px;padding:11px 20px;font-size:13px;font-family:inherit;cursor:pointer}
+.modal-close{position:absolute;top:16px;right:18px;background:none;border:none;font-size:22px;cursor:pointer;color:var(--text-muted);line-height:1}
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+@media(max-width:700px){.stats-bar{padding:16px};.filters-bar,.table-wrap{padding:0 16px 20px}.topbar{padding:0 16px}.modal{width:95vw}}
 </style>
 </head>
 <body>
 
+<!-- LOGIN -->
 <div id="login">
-  <div class="login-box">
-    <h1>🏥 Panel de Citas</h1>
-    <p>Clínica Vicente Pascual</p>
-    <input id="user" type="text" placeholder="Usuario"/>
-    <input id="pass" type="password" placeholder="Contraseña"/>
-    <button onclick="entrar()">Entrar</button>
-    <div class="error" id="err"></div>
+  <div class="login-wrap">
+    <div class="login-logo">Clínica Vicente Pascual</div>
+    <div class="login-title">Panel de Citas</div>
+    <div class="login-sub">Acceso exclusivo para el equipo</div>
+    <label>Usuario</label>
+    <input id="user" type="text" placeholder="usuario"/>
+    <label>Contraseña</label>
+    <input id="pass" type="password" placeholder="••••••••"/>
+    <button class="btn-login" onclick="entrar()">Entrar →</button>
+    <div class="err" id="err"></div>
   </div>
 </div>
 
+<!-- PANEL -->
 <div id="panel">
-  <header>
-    <h1>🏥 Panel de Citas — Clínica Vicente Pascual</h1>
-    <button onclick="salir()">Cerrar sesión</button>
-  </header>
-
-  <div class="stats">
-    <div class="stat"><div class="n" id="s-total">0</div><div class="l">Total citas</div></div>
-    <div class="stat"><div class="n" id="s-pend" style="color:#856404">0</div><div class="l">Pendientes</div></div>
-    <div class="stat"><div class="n" id="s-conf" style="color:#0a3622">0</div><div class="l">Confirmadas</div></div>
-    <div class="stat"><div class="n" id="s-canc" style="color:#842029">0</div><div class="l">Canceladas</div></div>
+  <div class="topbar">
+    <div class="topbar-left">
+      <div class="topbar-icon">🏥</div>
+      <div>
+        <div class="topbar-brand">Vicente Pascual</div>
+        <div class="topbar-sub">Panel de gestión de citas</div>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <button class="btn-refresh" onclick="cargarCitas()">↻ Actualizar</button>
+      <button class="btn-salir" onclick="salir()">Cerrar sesión</button>
+    </div>
   </div>
 
-  <button class="refresh" onclick="cargarCitas()">↻ Actualizar</button>
+  <div class="stats-bar">
+    <div class="stat-card"><div class="stat-n" id="s-total">0</div><div class="stat-l">Total citas</div></div>
+    <div class="stat-card pend"><div class="stat-n" id="s-pend">0</div><div class="stat-l">Pendientes</div></div>
+    <div class="stat-card conf"><div class="stat-n" id="s-conf">0</div><div class="stat-l">Confirmadas</div></div>
+    <div class="stat-card canc"><div class="stat-n" id="s-canc">0</div><div class="stat-l">Canceladas</div></div>
+    <div class="stat-card comp"><div class="stat-n" id="s-comp">0</div><div class="stat-l">Completadas</div></div>
+  </div>
 
-  <div class="filtros">
+  <div class="filters-bar">
     <button class="filtro active" onclick="filtrar('Todas',this)">Todas</button>
     <button class="filtro" onclick="filtrar('Pendiente',this)">Pendientes</button>
     <button class="filtro" onclick="filtrar('Confirmada',this)">Confirmadas</button>
@@ -78,20 +164,41 @@ select.est-sel{border:1px solid #ddd;border-radius:6px;padding:4px 8px;font-size
     <button class="filtro" onclick="filtrar('Completada',this)">Completadas</button>
   </div>
 
-  <table>
-    <thead>
-      <tr>
-        <th>Fecha</th>
-        <th>Nombre</th>
-        <th>Servicio</th>
-        <th>Día</th>
-        <th>Horario</th>
-        <th>Teléfono</th>
-        <th>Estado</th>
-      </tr>
-    </thead>
-    <tbody id="tabla"></tbody>
-  </table>
+  <div class="table-wrap">
+    <table class="citas-table">
+      <thead>
+        <tr>
+          <th>Fecha</th>
+          <th>Paciente</th>
+          <th>Servicio</th>
+          <th>Día</th>
+          <th>Horario</th>
+          <th>Teléfono</th>
+          <th>Estado</th>
+        </tr>
+      </thead>
+      <tbody id="tabla"><tr><td colspan="7" class="loading">Cargando citas...</td></tr></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- MODAL -->
+<div class="modal-bg" id="modal-bg">
+  <div class="modal">
+    <button class="modal-close" onclick="cerrarModal()">×</button>
+    <h2 id="modal-nombre">Cita</h2>
+    <div id="modal-contenido"></div>
+    <select class="modal-sel" id="modal-estado">
+      <option>Pendiente</option>
+      <option>Confirmada</option>
+      <option>Cancelada</option>
+      <option>Completada</option>
+    </select>
+    <div class="modal-btns">
+      <button class="btn-cancelar" onclick="cerrarModal()">Cancelar</button>
+      <button class="btn-guardar" onclick="guardarModal()">Guardar cambio</button>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -100,6 +207,7 @@ var USUARIO = 'clinica';
 var PASSWORD = 'vicente2024';
 var todasCitas = [];
 var filtroActual = 'Todas';
+var modalFila = null;
 
 function entrar() {
   var u = document.getElementById('user').value;
@@ -121,14 +229,14 @@ function salir() {
 }
 
 async function cargarCitas() {
+  document.getElementById('tabla').innerHTML = '<tr><td colspan="7" class="loading">Cargando...</td></tr>';
   try {
     var r = await fetch(SHEETS_URL);
-    todasCitas = await r.json();
+    var data = await r.json();
+    todasCitas = Array.isArray(data) ? data : [];
     actualizarStats();
     renderTabla(filtroActual);
-  } catch(e) {
-    console.error(e);
-  }
+  } catch(e) { console.error(e); }
 }
 
 function actualizarStats() {
@@ -136,6 +244,7 @@ function actualizarStats() {
   document.getElementById('s-pend').textContent = todasCitas.filter(c=>c.estado==='Pendiente').length;
   document.getElementById('s-conf').textContent = todasCitas.filter(c=>c.estado==='Confirmada').length;
   document.getElementById('s-canc').textContent = todasCitas.filter(c=>c.estado==='Cancelada').length;
+  document.getElementById('s-comp').textContent = todasCitas.filter(c=>c.estado==='Completada').length;
 }
 
 function renderTabla(filtro) {
@@ -146,20 +255,14 @@ function renderTabla(filtro) {
     return;
   }
   tbody.innerHTML = citas.map(function(c) {
-    return '<tr>'+
-      '<td>'+c.fecha+'</td>'+
-      '<td><strong>'+c.nombre+'</strong></td>'+
-      '<td>'+c.tratamiento+'</td>'+
-      '<td>'+c.dia+'</td>'+
-      '<td>'+c.hora+'</td>'+
-      '<td><a href="tel:'+c.telefono+'">'+c.telefono+'</a></td>'+
-      '<td>'+
-        '<select class="est-sel" onchange="cambiarEstado('+c.fila+',this.value)">'+
-          ['Pendiente','Confirmada','Cancelada','Completada'].map(function(e){
-            return '<option'+(e===c.estado?' selected':'')+'>'+e+'</option>';
-          }).join('')+
-        '</select>'+
-      '</td>'+
+    return '<tr style="cursor:pointer" onclick="abrirModal('+c.fila+')">'+
+      '<td class="fecha-cell">'+(c.fecha||'—')+'</td>'+
+      '<td class="nombre-cell"><strong>'+(c.nombre||'—')+'</strong></td>'+
+      '<td>'+(c.tratamiento||'—')+'</td>'+
+      '<td>'+(c.dia||'—')+'</td>'+
+      '<td>'+(c.hora||'—')+'</td>'+
+      '<td><a class="tel-link" href="tel:'+(c.telefono||'')+'" onclick="event.stopPropagation()">'+(c.telefono||'—')+'</a></td>'+
+      '<td><span class="badge '+(c.estado||'Pendiente')+'">'+(c.estado||'Pendiente')+'</span></td>'+
     '</tr>';
   }).join('');
 }
@@ -171,22 +274,47 @@ function filtrar(f, btn) {
   renderTabla(f);
 }
 
+function abrirModal(fila) {
+  var cita = todasCitas.find(function(c){return c.fila===fila;});
+  if (!cita) return;
+  modalFila = fila;
+  document.getElementById('modal-nombre').textContent = cita.nombre || '—';
+  document.getElementById('modal-contenido').innerHTML =
+    '<div class="modal-row"><div class="modal-label">Servicio</div><div class="modal-val">'+(cita.tratamiento||'—')+'</div></div>'+
+    '<div class="modal-row"><div class="modal-label">Día</div><div class="modal-val">'+(cita.dia||'—')+'</div></div>'+
+    '<div class="modal-row"><div class="modal-label">Horario</div><div class="modal-val">'+(cita.hora||'—')+'</div></div>'+
+    '<div class="modal-row"><div class="modal-label">Teléfono</div><div class="modal-val"><a class="tel-link" href="tel:'+(cita.telefono||'')+'">'+(cita.telefono||'—')+'</a></div></div>'+
+    '<div class="modal-row"><div class="modal-label">Fecha</div><div class="modal-val">'+(cita.fecha||'—')+'</div></div>';
+  document.getElementById('modal-estado').value = cita.estado || 'Pendiente';
+  document.getElementById('modal-bg').classList.add('open');
+}
+
+function cerrarModal() {
+  document.getElementById('modal-bg').classList.remove('open');
+  modalFila = null;
+}
+
+async function guardarModal() {
+  if (!modalFila) return;
+  var estado = document.getElementById('modal-estado').value;
+  await cambiarEstado(modalFila, estado);
+  cerrarModal();
+}
+
 async function cambiarEstado(fila, estado) {
   try {
     await fetch(SHEETS_URL, {
       method: 'POST',
-      mode: 'no-cors',
       headers: {'Content-Type':'application/json'},
       body: JSON.stringify({accion:'actualizar', fila:fila, estado:estado})
     });
     await cargarCitas();
-  } catch(e) {
-    console.error(e);
-  }
+  } catch(e) { console.error(e); }
 }
 
-document.getElementById('user').addEventListener('keydown', function(e){if(e.key==='Enter')entrar()});
-document.getElementById('pass').addEventListener('keydown', function(e){if(e.key==='Enter')entrar()});
+document.getElementById('modal-bg').addEventListener('click', function(e){if(e.target===this)cerrarModal();});
+document.getElementById('user').addEventListener('keydown', function(e){if(e.key==='Enter')entrar();});
+document.getElementById('pass').addEventListener('keydown', function(e){if(e.key==='Enter')entrar();});
 </script>
 </body>
 </html>
