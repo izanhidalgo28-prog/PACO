@@ -22,7 +22,7 @@ module.exports = async function handler(req, res) {
 
   const SHEETS_URL = 'https://script.google.com/macros/s/AKfycbyQDszGP0RlFR_jsjyfyvc4ZVDg7wyHaYp8qkog1Kr-Xcciq8-r0ScXRvAz0CHA1m8aGw/exec';
   const TWILIO_SID = 'AC5dbda67e3e4433d40118fb90a5984ec4';
-  const TWILIO_TOKEN = '6276d0dab9929c69220a58adebc4ed90' ;
+  const TWILIO_TOKEN = '6276d0dab9929c69220a58adebc4ed90';
 
   function responder(texto) {
     const twiml = new twilio.twiml.MessagingResponse();
@@ -32,9 +32,58 @@ module.exports = async function handler(req, res) {
   }
 
   const msg = userMessage.toLowerCase();
-  const enFlujoDeСita = ['nombre','telefono','servicio','dia','hora'].includes(conv.paso);
+  const enFlujoDeCita = ['nombre','telefono','servicio','dia','hora','consulta_telefono','cancelar_telefono'].includes(conv.paso);
 
-  if (!estaAbierto() && !enFlujoDeСita) {
+  // ── CONSULTAR MI CITA (debe comprobarse ANTES que el flujo de nueva cita) ──
+  if (!enFlujoDeCita && (msg.includes('mi cita') || msg.includes('ver cita') || msg.includes('consultar cita'))) {
+    conv.paso = 'consulta_telefono';
+    return responder('Para buscar tu cita, dime tu número de teléfono.');
+  }
+
+  if (conv.paso === 'consulta_telefono') {
+    conv.paso = null;
+    try {
+      const r = await fetch(SHEETS_URL + '?sheet=citas');
+      const citas = await r.json();
+      const telefonoLimpio = userMessage.replace(/\s/g, '');
+      const miCita = Array.isArray(citas) ? citas.find(c => String(c.telefono).replace(/\s/g,'') === telefonoLimpio && c.estado !== 'Cancelada') : null;
+      if (miCita) {
+        return responder(`Tu cita: ${miCita.tratamiento} el ${miCita.dia} por la ${miCita.hora}. Estado: ${miCita.estado}.`);
+      }
+      return responder('No he encontrado ninguna cita activa con ese teléfono. Si crees que es un error, llámanos al 966 20 21 22.');
+    } catch(e) {
+      return responder('No he podido consultar tu cita ahora mismo. Llámanos al 966 20 21 22.');
+    }
+  }
+
+  // ── CANCELAR CITA (debe comprobarse ANTES que el flujo de nueva cita) ──
+  if (!enFlujoDeCita && (msg.includes('cancelar') || msg.includes('anular'))) {
+    conv.paso = 'cancelar_telefono';
+    return responder('Entiendo que quieres cancelar tu cita. Dime tu número de teléfono para localizarla.');
+  }
+
+  if (conv.paso === 'cancelar_telefono') {
+    conv.paso = null;
+    try {
+      const r = await fetch(SHEETS_URL + '?sheet=citas');
+      const citas = await r.json();
+      const telefonoLimpio = userMessage.replace(/\s/g, '');
+      const miCita = Array.isArray(citas) ? citas.find(c => String(c.telefono).replace(/\s/g,'') === telefonoLimpio && c.estado !== 'Cancelada') : null;
+      if (miCita) {
+        await fetch(SHEETS_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ accion: 'actualizar', fila: miCita.fila, estado: 'Cancelada' })
+        }).catch(() => {});
+        return responder(`Tu cita de ${miCita.tratamiento} el ${miCita.dia} ha sido cancelada. Si quieres pedir otra, escribe "cita".`);
+      }
+      return responder('No he encontrado ninguna cita activa con ese teléfono. Llámanos al 966 20 21 22 si necesitas ayuda.');
+    } catch(e) {
+      return responder('No he podido cancelar la cita ahora mismo. Llámanos al 966 20 21 22.');
+    }
+  }
+
+  if (!estaAbierto() && !enFlujoDeCita) {
     if (msg.includes('cita') || msg.includes('reservar') || msg.includes('pedir')) {
       conv.paso = 'nombre';
       return responder('Hola soy Vera. Ahora estamos cerrados, pero puedes dejar tu solicitud y te confirmamos cuando abramos. ¿Cuál es tu nombre completo?');
@@ -67,8 +116,8 @@ module.exports = async function handler(req, res) {
     conv.paso = null;
 
     await fetch(SHEETS_URL, {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         nombre: conv.nombre,
         telefono: conv.telefono,
@@ -78,6 +127,16 @@ module.exports = async function handler(req, res) {
       })
     }).catch(() => {});
 
+    // Intentar mandar resumen a la clínica (mejora 4 simplificada: aviso inmediato de nueva cita)
+    try {
+      const client = twilio(TWILIO_SID, TWILIO_TOKEN);
+      await client.messages.create({
+        from: 'whatsapp:+14155238886',
+        to: 'whatsapp:+34651173012',
+        body: `Nueva cita registrada:\nNombre: ${conv.nombre}\nTelefono: ${conv.telefono}\nServicio: ${conv.servicio}\nDia: ${conv.dia}\nHora: ${conv.hora}`
+      });
+    } catch(e) { console.error('Aviso clinica error:', e.message); }
+
     return responder(`Perfecto ${conv.nombre}, tu cita de ${conv.servicio} para el ${conv.dia} por la ${conv.hora} ha sido registrada. Te llamaremos al ${conv.telefono} para confirmar. ¡Hasta pronto!`);
   }
 
@@ -86,7 +145,7 @@ module.exports = async function handler(req, res) {
     return responder('Perfecto, vamos a pedir tu cita. ¿Cuál es tu nombre completo?');
   }
 
-  const system = `Eres Vera, la asistente virtual de Clínica Vicente Pascual, especializada en Fisioterapia, Osteopatía y Podología en Av. Alicante nº46, Elche. Teléfono: 966 20 21 22. Responde en español, sé amable y conciso. Máximo 3 oraciones. No des diagnósticos médicos. Si alguien quiere pedir cita dile que escriba la palabra "cita".`;
+  const system = `Eres Vera, la asistente virtual de Clínica Vicente Pascual, especializada en Fisioterapia, Osteopatía y Podología en Av. Alicante nº46, Elche. Teléfono: 966 20 21 22. Responde en español, sé amable y conciso. Máximo 3 oraciones. No des diagnósticos médicos. Si alguien quiere pedir cita dile que escriba la palabra "cita". Si quiere consultar su cita, dile que escriba "mi cita". Si quiere cancelar, dile que escriba "cancelar".`;
 
   try {
     const r = await fetch('https://api.anthropic.com/v1/messages', {
