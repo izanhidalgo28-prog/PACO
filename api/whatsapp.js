@@ -11,14 +11,46 @@ function estaAbierto() {
   return hora >= 8 && hora < 20;
 }
 
+// ── Detección simple de idioma ──────────────────────────────────────
+function esIngles(texto) {
+  const t = texto.toLowerCase();
+  const palabrasIngles = ['hello','hi','appointment','book','cancel','price','schedule','please','thanks','thank you','today','tomorrow','can i','do you','i want','i need','what time','open','closed'];
+  return palabrasIngles.some(p => t.includes(p));
+}
+
+// ── Variaciones de personalidad ─────────────────────────────────────
+function elegir(opciones) {
+  return opciones[Math.floor(Math.random() * opciones.length)];
+}
+
+const SALUDOS_ES = [
+  '¡Hola! Soy Vera 👋',
+  '¡Hola de nuevo! Soy Vera 😊',
+  'Hola, soy Vera, encantada de ayudarte'
+];
+const SALUDOS_EN = [
+  'Hi! I\'m Vera 👋',
+  'Hello again! I\'m Vera 😊',
+  'Hi there, I\'m Vera, happy to help'
+];
+
+const CONFIRMACIONES_ES = ['Perfecto', '¡Genial!', 'Estupendo', 'Anotado'];
+const CONFIRMACIONES_EN = ['Perfect', 'Great!', 'Awesome', 'Got it'];
+
 module.exports = async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end();
 
   const userMessage = req.body.Body.trim();
   const from = req.body.From;
 
-  if (!conversaciones[from]) conversaciones[from] = { paso: null };
+  if (!conversaciones[from]) conversaciones[from] = { paso: null, idioma: null };
   const conv = conversaciones[from];
+
+  // Detecta idioma solo si todavía no se ha fijado en esta conversación
+  if (!conv.idioma) {
+    conv.idioma = esIngles(userMessage) ? 'en' : 'es';
+  }
+  const EN = conv.idioma === 'en';
 
   const SHEETS_URL = 'https://script.google.com/macros/s/AKfycbyQDszGP0RlFR_jsjyfyvc4ZVDg7wyHaYp8qkog1Kr-Xcciq8-r0ScXRvAz0CHA1m8aGw/exec';
   const TWILIO_SID = 'AC5dbda67e3e4433d40118fb90a5984ec4';
@@ -34,10 +66,17 @@ module.exports = async function handler(req, res) {
   const msg = userMessage.toLowerCase();
   const enFlujoDeCita = ['nombre','telefono','servicio','dia','hora','consulta_telefono','cancelar_telefono'].includes(conv.paso);
 
-  // ── CONSULTAR MI CITA (debe comprobarse ANTES que el flujo de nueva cita) ──
-  if (!enFlujoDeCita && (msg.includes('mi cita') || msg.includes('ver cita') || msg.includes('consultar cita'))) {
+  // Palabras clave bilingües
+  const esCita = msg.includes('cita') || msg.includes('reservar') || msg.includes('pedir') || msg.includes('appointment') || msg.includes('book') || msg.includes('schedule');
+  const esMiCita = msg.includes('mi cita') || msg.includes('ver cita') || msg.includes('consultar cita') || msg.includes('my appointment') || msg.includes('check appointment');
+  const esCancelar = msg.includes('cancelar') || msg.includes('anular') || msg.includes('cancel');
+
+  // ── CONSULTAR MI CITA ────────────────────────────────────────────
+  if (!enFlujoDeCita && esMiCita) {
     conv.paso = 'consulta_telefono';
-    return responder('Para buscar tu cita, dime tu número de teléfono.');
+    return responder(EN
+      ? 'To find your appointment, please tell me your phone number.'
+      : 'Para buscar tu cita, dime tu número de teléfono.');
   }
 
   if (conv.paso === 'consulta_telefono') {
@@ -48,18 +87,26 @@ module.exports = async function handler(req, res) {
       const telefonoLimpio = userMessage.replace(/\s/g, '');
       const miCita = Array.isArray(citas) ? citas.find(c => String(c.telefono).replace(/\s/g,'') === telefonoLimpio && c.estado !== 'Cancelada') : null;
       if (miCita) {
-        return responder(`Tu cita: ${miCita.tratamiento} el ${miCita.dia} por la ${miCita.hora}. Estado: ${miCita.estado}.`);
+        return responder(EN
+          ? `Your appointment: ${miCita.tratamiento} on ${miCita.dia} in the ${miCita.hora}. Status: ${miCita.estado}.`
+          : `Tu cita: ${miCita.tratamiento} el ${miCita.dia} por la ${miCita.hora}. Estado: ${miCita.estado}.`);
       }
-      return responder('No he encontrado ninguna cita activa con ese teléfono. Si crees que es un error, llámanos al 966 20 21 22.');
+      return responder(EN
+        ? 'I couldn\'t find an active appointment with that phone number. If you think this is a mistake, please call us at 966 20 21 22.'
+        : 'No he encontrado ninguna cita activa con ese teléfono. Si crees que es un error, llámanos al 966 20 21 22.');
     } catch(e) {
-      return responder('No he podido consultar tu cita ahora mismo. Llámanos al 966 20 21 22.');
+      return responder(EN
+        ? 'I couldn\'t check your appointment right now. Please call us at 966 20 21 22.'
+        : 'No he podido consultar tu cita ahora mismo. Llámanos al 966 20 21 22.');
     }
   }
 
-  // ── CANCELAR CITA (debe comprobarse ANTES que el flujo de nueva cita) ──
-  if (!enFlujoDeCita && (msg.includes('cancelar') || msg.includes('anular'))) {
+  // ── CANCELAR CITA ────────────────────────────────────────────────
+  if (!enFlujoDeCita && esCancelar) {
     conv.paso = 'cancelar_telefono';
-    return responder('Entiendo que quieres cancelar tu cita. Dime tu número de teléfono para localizarla.');
+    return responder(EN
+      ? 'I understand you want to cancel your appointment. Please tell me your phone number to find it.'
+      : 'Entiendo que quieres cancelar tu cita. Dime tu número de teléfono para localizarla.');
   }
 
   if (conv.paso === 'cancelar_telefono') {
@@ -75,41 +122,57 @@ module.exports = async function handler(req, res) {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ accion: 'actualizar', fila: miCita.fila, estado: 'Cancelada' })
         }).catch(() => {});
-        return responder(`Tu cita de ${miCita.tratamiento} el ${miCita.dia} ha sido cancelada. Si quieres pedir otra, escribe "cita".`);
+        return responder(EN
+          ? `Your ${miCita.tratamiento} appointment on ${miCita.dia} has been cancelled. If you'd like to book another, just write "appointment".`
+          : `Tu cita de ${miCita.tratamiento} el ${miCita.dia} ha sido cancelada. Si quieres pedir otra, escribe "cita".`);
       }
-      return responder('No he encontrado ninguna cita activa con ese teléfono. Llámanos al 966 20 21 22 si necesitas ayuda.');
+      return responder(EN
+        ? 'I couldn\'t find an active appointment with that phone number. Call us at 966 20 21 22 if you need help.'
+        : 'No he encontrado ninguna cita activa con ese teléfono. Llámanos al 966 20 21 22 si necesitas ayuda.');
     } catch(e) {
-      return responder('No he podido cancelar la cita ahora mismo. Llámanos al 966 20 21 22.');
+      return responder(EN
+        ? 'I couldn\'t cancel the appointment right now. Please call us at 966 20 21 22.'
+        : 'No he podido cancelar la cita ahora mismo. Llámanos al 966 20 21 22.');
     }
   }
 
+  // ── FUERA DE HORARIO ─────────────────────────────────────────────
   if (!estaAbierto() && !enFlujoDeCita) {
-    if (msg.includes('cita') || msg.includes('reservar') || msg.includes('pedir')) {
+    if (esCita) {
       conv.paso = 'nombre';
-      return responder('Hola soy Vera. Ahora estamos cerrados, pero puedes dejar tu solicitud y te confirmamos cuando abramos. ¿Cuál es tu nombre completo?');
+      return responder(EN
+        ? `Hi, I'm Vera. We're currently closed, but you can leave your request and we'll confirm once we open. What's your full name?`
+        : `${elegir(SALUDOS_ES)}. Ahora estamos cerrados, pero puedes dejar tu solicitud y te confirmamos cuando abramos. ¿Cuál es tu nombre completo?`);
     }
-    return responder('Hola soy Vera. Ahora mismo estamos cerrados. Horario: lunes a jueves 8:00–20:00, viernes 8:00–18:00. Escribe "cita" para dejar tu solicitud y te confirmamos mañana. También puedes llamarnos al 966 20 21 22.');
+    return responder(EN
+      ? `Hi, I'm Vera. We're currently closed. Hours: Monday to Thursday 8:00–20:00, Friday 8:00–18:00. Write "appointment" to leave your request, or call us at 966 20 21 22.`
+      : `${elegir(SALUDOS_ES)}. Ahora mismo estamos cerrados. Horario: lunes a jueves 8:00–20:00, viernes 8:00–18:00. Escribe "cita" para dejar tu solicitud y te confirmamos mañana. También puedes llamarnos al 966 20 21 22.`);
   }
 
+  // ── FLUJO DE NUEVA CITA ──────────────────────────────────────────
   if (conv.paso === 'nombre') {
     conv.nombre = userMessage;
     conv.paso = 'telefono';
-    return responder('¿Cuál es tu número de teléfono?');
+    return responder(EN ? 'What\'s your phone number?' : '¿Cuál es tu número de teléfono?');
   }
   if (conv.paso === 'telefono') {
     conv.telefono = userMessage;
     conv.paso = 'servicio';
-    return responder('¿Qué servicio necesitas?\n1. Fisioterapia\n2. Osteopatía\n3. Podología\n4. No sé, necesito orientación');
+    return responder(EN
+      ? 'Which service do you need?\n1. Physiotherapy\n2. Osteopathy\n3. Podiatry\n4. Not sure, I need guidance'
+      : '¿Qué servicio necesitas?\n1. Fisioterapia\n2. Osteopatía\n3. Podología\n4. No sé, necesito orientación');
   }
   if (conv.paso === 'servicio') {
     conv.servicio = userMessage;
     conv.paso = 'dia';
-    return responder('¿Qué día te viene mejor? (ej: lunes, martes...)');
+    return responder(EN ? 'Which day works best for you? (e.g. Monday, Tuesday...)' : '¿Qué día te viene mejor? (ej: lunes, martes...)');
   }
   if (conv.paso === 'dia') {
     conv.dia = userMessage;
     conv.paso = 'hora';
-    return responder('¿Prefieres mañana (8am-12pm), tarde (12pm-4pm) o última hora (4pm-8pm)?');
+    return responder(EN
+      ? 'Do you prefer morning (8am-12pm), afternoon (12pm-4pm) or evening (4pm-8pm)?'
+      : '¿Prefieres mañana (8am-12pm), tarde (12pm-4pm) o última hora (4pm-8pm)?');
   }
   if (conv.paso === 'hora') {
     conv.hora = userMessage;
@@ -127,7 +190,6 @@ module.exports = async function handler(req, res) {
       })
     }).catch(() => {});
 
-    // Intentar mandar resumen a la clínica (mejora 4 simplificada: aviso inmediato de nueva cita)
     try {
       const client = twilio(TWILIO_SID, TWILIO_TOKEN);
       await client.messages.create({
@@ -137,15 +199,23 @@ module.exports = async function handler(req, res) {
       });
     } catch(e) { console.error('Aviso clinica error:', e.message); }
 
-    return responder(`Perfecto ${conv.nombre}, tu cita de ${conv.servicio} para el ${conv.dia} por la ${conv.hora} ha sido registrada. Te llamaremos al ${conv.telefono} para confirmar. ¡Hasta pronto!`);
+    const confirm = EN ? elegir(CONFIRMACIONES_EN) : elegir(CONFIRMACIONES_ES);
+    return responder(EN
+      ? `${confirm} ${conv.nombre}, your ${conv.servicio} appointment for ${conv.dia} in the ${conv.hora} has been registered. We'll call you at ${conv.telefono} to confirm. See you soon!`
+      : `${confirm} ${conv.nombre}, tu cita de ${conv.servicio} para el ${conv.dia} por la ${conv.hora} ha sido registrada. Te llamaremos al ${conv.telefono} para confirmar. ¡Hasta pronto!`);
   }
 
-  if (msg.includes('cita') || msg.includes('reservar') || msg.includes('pedir')) {
+  if (esCita) {
     conv.paso = 'nombre';
-    return responder('Perfecto, vamos a pedir tu cita. ¿Cuál es tu nombre completo?');
+    return responder(EN
+      ? `${elegir(CONFIRMACIONES_EN)}, let's book your appointment. What's your full name?`
+      : `${elegir(CONFIRMACIONES_ES)}, vamos a pedir tu cita. ¿Cuál es tu nombre completo?`);
   }
 
-  const system = `Eres Vera, la asistente virtual de Clínica Vicente Pascual, especializada en Fisioterapia, Osteopatía y Podología en Av. Alicante nº46, Elche. Teléfono: 966 20 21 22. Responde en español, sé amable y conciso. Máximo 3 oraciones. No des diagnósticos médicos. Si alguien quiere pedir cita dile que escriba la palabra "cita". Si quiere consultar su cita, dile que escriba "mi cita". Si quiere cancelar, dile que escriba "cancelar".`;
+  // ── IA GENERAL ───────────────────────────────────────────────────
+  const system = EN
+    ? `You are Vera, the virtual assistant of Clínica Vicente Pascual, specialized in Physiotherapy, Osteopathy and Podiatry at Av. Alicante nº46, Elche, Spain. Phone: 966 20 21 22. Reply in English, be warm, friendly and concise — vary your wording naturally instead of repeating the same phrasing every time. Maximum 3 sentences. Never give medical diagnoses. If someone wants to book an appointment, tell them to write "appointment". If they want to check their appointment, tell them to write "my appointment". If they want to cancel, tell them to write "cancel".`
+    : `Eres Vera, la asistente virtual de Clínica Vicente Pascual, especializada en Fisioterapia, Osteopatía y Podología en Av. Alicante nº46, Elche. Teléfono: 966 20 21 22. Responde en español, sé cercana, amable y concisa — varía tu forma de expresarte de manera natural en lugar de repetir siempre las mismas frases. Máximo 3 oraciones. No des diagnósticos médicos. Si alguien quiere pedir cita dile que escriba la palabra "cita". Si quiere consultar su cita, dile que escriba "mi cita". Si quiere cancelar, dile que escriba "cancelar".`;
 
   try {
     const r = await fetch('https://api.anthropic.com/v1/messages', {
@@ -165,6 +235,8 @@ module.exports = async function handler(req, res) {
     const data = await r.json();
     responder(data.content[0].text);
   } catch (e) {
-    responder('Lo siento, hubo un error. Llámanos al 966 20 21 22.');
+    responder(EN
+      ? 'Sorry, something went wrong. Please call us at 966 20 21 22.'
+      : 'Lo siento, hubo un error. Llámanos al 966 20 21 22.');
   }
 };
