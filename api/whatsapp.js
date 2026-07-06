@@ -39,7 +39,7 @@ module.exports = async function handler(req, res) {
   conv.idioma = esIngles(userMessage) ? 'en' : 'es';
   const EN = conv.idioma === 'en';
 
-  const SHEETS_URL = 'https://script.google.com/macros/s/AKfycbyQDszGP0RlFR_jsjyfyvc4ZVDg7wyHaYp8qkog1Kr-Xcciq8-r0ScXRvAz0CHA1m8aGw/exec';
+  const SHEETS_URL = 'https://script.google.com/macros/s/AKfycbyxdmC6NhQf8d_G75Uq-sKmBSVAR5J0n6Bl8hdZ_2XSnC7cvc4EgHdTa1CL0Jmsy_roWQ/exec';
   const TWILIO_SID = 'AC5dbda67e3e4433d40118fb90a5984ec4';
   const TWILIO_TOKEN = '6276d0dab9929c69220a58adebc4ed90';
 
