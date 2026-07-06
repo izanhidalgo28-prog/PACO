@@ -11,29 +11,18 @@ function estaAbierto() {
   return hora >= 8 && hora < 20;
 }
 
-// ── Detección simple de idioma ──────────────────────────────────────
 function esIngles(texto) {
   const t = texto.toLowerCase();
   const palabrasIngles = ['hello','hi','appointment','book','cancel','price','schedule','please','thanks','thank you','today','tomorrow','can i','do you','i want','i need','what time','open','closed'];
   return palabrasIngles.some(p => t.includes(p));
 }
 
-// ── Variaciones de personalidad ─────────────────────────────────────
 function elegir(opciones) {
   return opciones[Math.floor(Math.random() * opciones.length)];
 }
 
-const SALUDOS_ES = [
-  '¡Hola! Soy Vera 👋',
-  '¡Hola de nuevo! Soy Vera 😊',
-  'Hola, soy Vera, encantada de ayudarte'
-];
-const SALUDOS_EN = [
-  'Hi! I\'m Vera 👋',
-  'Hello again! I\'m Vera 😊',
-  'Hi there, I\'m Vera, happy to help'
-];
-
+const SALUDOS_ES = ['¡Hola! Soy Vera 👋', '¡Hola de nuevo! Soy Vera 😊', 'Hola, soy Vera, encantada de ayudarte'];
+const SALUDOS_EN = ['Hi! I\'m Vera 👋', 'Hello again! I\'m Vera 😊', 'Hi there, I\'m Vera, happy to help'];
 const CONFIRMACIONES_ES = ['Perfecto', '¡Genial!', 'Estupendo', 'Anotado'];
 const CONFIRMACIONES_EN = ['Perfect', 'Great!', 'Awesome', 'Got it'];
 
@@ -43,12 +32,11 @@ module.exports = async function handler(req, res) {
   const userMessage = req.body.Body.trim();
   const from = req.body.From;
 
-  if (!conversaciones[from]) conversaciones[from] = { paso: null, idioma: null };
+  if (!conversaciones[from]) conversaciones[from] = { paso: null };
   const conv = conversaciones[from];
 
-  // Detecta idioma solo si todavía no se ha fijado en esta conversación
+  // Re-detecta idioma en cada mensaje
   conv.idioma = esIngles(userMessage) ? 'en' : 'es';
-  }
   const EN = conv.idioma === 'en';
 
   const SHEETS_URL = 'https://script.google.com/macros/s/AKfycbyQDszGP0RlFR_jsjyfyvc4ZVDg7wyHaYp8qkog1Kr-Xcciq8-r0ScXRvAz0CHA1m8aGw/exec';
@@ -65,7 +53,6 @@ module.exports = async function handler(req, res) {
   const msg = userMessage.toLowerCase();
   const enFlujoDeCita = ['nombre','telefono','servicio','dia','hora','consulta_telefono','cancelar_telefono'].includes(conv.paso);
 
-  // Palabras clave bilingües
   const esCita = msg.includes('cita') || msg.includes('reservar') || msg.includes('pedir') || msg.includes('appointment') || msg.includes('book') || msg.includes('schedule');
   const esMiCita = msg.includes('mi cita') || msg.includes('ver cita') || msg.includes('consultar cita') || msg.includes('my appointment') || msg.includes('check appointment');
   const esCancelar = msg.includes('cancelar') || msg.includes('anular') || msg.includes('cancel');
@@ -91,8 +78,8 @@ module.exports = async function handler(req, res) {
           : `Tu cita: ${miCita.tratamiento} el ${miCita.dia} por la ${miCita.hora}. Estado: ${miCita.estado}.`);
       }
       return responder(EN
-        ? 'I couldn\'t find an active appointment with that phone number. If you think this is a mistake, please call us at 966 20 21 22.'
-        : 'No he encontrado ninguna cita activa con ese teléfono. Si crees que es un error, llámanos al 966 20 21 22.');
+        ? 'I couldn\'t find an active appointment with that phone number. Please call us at 966 20 21 22.'
+        : 'No he encontrado ninguna cita activa con ese teléfono. Llámanos al 966 20 21 22.');
     } catch(e) {
       return responder(EN
         ? 'I couldn\'t check your appointment right now. Please call us at 966 20 21 22.'
@@ -122,8 +109,8 @@ module.exports = async function handler(req, res) {
           body: JSON.stringify({ accion: 'actualizar', fila: miCita.fila, estado: 'Cancelada' })
         }).catch(() => {});
         return responder(EN
-          ? `Your ${miCita.tratamiento} appointment on ${miCita.dia} has been cancelled. If you'd like to book another, just write "appointment".`
-          : `Tu cita de ${miCita.tratamiento} el ${miCita.dia} ha sido cancelada. Si quieres pedir otra, escribe "cita".`);
+          ? `Your ${miCita.tratamiento} appointment on ${miCita.dia} has been cancelled. Write "appointment" to book a new one.`
+          : `Tu cita de ${miCita.tratamiento} el ${miCita.dia} ha sido cancelada. Escribe "cita" si quieres pedir otra.`);
       }
       return responder(EN
         ? 'I couldn\'t find an active appointment with that phone number. Call us at 966 20 21 22 if you need help.'
@@ -140,12 +127,12 @@ module.exports = async function handler(req, res) {
     if (esCita) {
       conv.paso = 'nombre';
       return responder(EN
-        ? `Hi, I'm Vera. We're currently closed, but you can leave your request and we'll confirm once we open. What's your full name?`
+        ? 'Hi, I\'m Vera. We\'re currently closed, but you can leave your request and we\'ll confirm when we open. What\'s your full name?'
         : `${elegir(SALUDOS_ES)}. Ahora estamos cerrados, pero puedes dejar tu solicitud y te confirmamos cuando abramos. ¿Cuál es tu nombre completo?`);
     }
     return responder(EN
-      ? `Hi, I'm Vera. We're currently closed. Hours: Monday to Thursday 8:00–20:00, Friday 8:00–18:00. Write "appointment" to leave your request, or call us at 966 20 21 22.`
-      : `${elegir(SALUDOS_ES)}. Ahora mismo estamos cerrados. Horario: lunes a jueves 8:00–20:00, viernes 8:00–18:00. Escribe "cita" para dejar tu solicitud y te confirmamos mañana. También puedes llamarnos al 966 20 21 22.`);
+      ? 'Hi, I\'m Vera. We\'re currently closed. Hours: Monday to Thursday 8:00–20:00, Friday 8:00–18:00. Write "appointment" to leave your request, or call us at 966 20 21 22.'
+      : `${elegir(SALUDOS_ES)}. Ahora mismo estamos cerrados. Horario: lunes a jueves 8:00–20:00, viernes 8:00–18:00. Escribe "cita" para dejar tu solicitud. También puedes llamarnos al 966 20 21 22.`);
   }
 
   // ── FLUJO DE NUEVA CITA ──────────────────────────────────────────
@@ -213,8 +200,8 @@ module.exports = async function handler(req, res) {
 
   // ── IA GENERAL ───────────────────────────────────────────────────
   const system = EN
-    ? `You are Vera, the virtual assistant of Clínica Vicente Pascual, specialized in Physiotherapy, Osteopathy and Podiatry at Av. Alicante nº46, Elche, Spain. Phone: 966 20 21 22. Reply in English, be warm, friendly and concise — vary your wording naturally instead of repeating the same phrasing every time. Maximum 3 sentences. Never give medical diagnoses. If someone wants to book an appointment, tell them to write "appointment". If they want to check their appointment, tell them to write "my appointment". If they want to cancel, tell them to write "cancel".`
-    : `Eres Vera, la asistente virtual de Clínica Vicente Pascual, especializada en Fisioterapia, Osteopatía y Podología en Av. Alicante nº46, Elche. Teléfono: 966 20 21 22. Responde en español, sé cercana, amable y concisa — varía tu forma de expresarte de manera natural en lugar de repetir siempre las mismas frases. Máximo 3 oraciones. No des diagnósticos médicos. Si alguien quiere pedir cita dile que escriba la palabra "cita". Si quiere consultar su cita, dile que escriba "mi cita". Si quiere cancelar, dile que escriba "cancelar" ...No uses markdown, asteriscos ni formato especial. Responde siempre en español a menos que el paciente escriba en inglés, en cuyo caso responde en inglés.`.`;
+    ? `You are Vera, the virtual assistant of Clínica Vicente Pascual, specialized in Physiotherapy, Osteopathy and Podiatry at Av. Alicante nº46, Elche, Spain. Phone: 966 20 21 22. Reply in English, be warm, friendly and concise — vary your wording naturally. Maximum 3 sentences. Never give medical diagnoses. No markdown or special formatting. If someone wants to book tell them to write "appointment". If they want to check their appointment write "my appointment". If they want to cancel write "cancel".`
+    : `Eres Vera, la asistente virtual de Clínica Vicente Pascual, especializada en Fisioterapia, Osteopatía y Podología en Av. Alicante nº46, Elche. Teléfono: 966 20 21 22. Responde siempre en español, sé cercana, amable y concisa — varía tu forma de expresarte de manera natural. Máximo 3 oraciones. No des diagnósticos médicos. No uses markdown ni formato especial. Si alguien quiere pedir cita dile que escriba "cita". Si quiere consultar su cita dile "mi cita". Si quiere cancelar dile "cancelar".`;
 
   try {
     const r = await fetch('https://api.anthropic.com/v1/messages', {
@@ -233,7 +220,7 @@ module.exports = async function handler(req, res) {
     });
     const data = await r.json();
     responder(data.content[0].text);
-  } catch (e) {
+  } catch(e) {
     responder(EN
       ? 'Sorry, something went wrong. Please call us at 966 20 21 22.'
       : 'Lo siento, hubo un error. Llámanos al 966 20 21 22.');
