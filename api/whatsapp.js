@@ -47,8 +47,7 @@ module.exports = async function handler(req, res) {
   const conv = conversaciones[from];
 
   // Detecta idioma solo si todavía no se ha fijado en esta conversación
-  if (!conv.idioma) {
-    conv.idioma = esIngles(userMessage) ? 'en' : 'es';
+  conv.idioma = esIngles(userMessage) ? 'en' : 'es';
   }
   const EN = conv.idioma === 'en';
 
