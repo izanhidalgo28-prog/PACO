@@ -35,7 +35,6 @@ module.exports = async function handler(req, res) {
   if (!conversaciones[from]) conversaciones[from] = { paso: null };
   const conv = conversaciones[from];
 
-  // Re-detecta idioma en cada mensaje
   conv.idioma = esIngles(userMessage) ? 'en' : 'es';
   const EN = conv.idioma === 'en';
 
@@ -48,6 +47,19 @@ module.exports = async function handler(req, res) {
     twiml.message(texto);
     res.setHeader('Content-Type', 'text/xml');
     res.status(200).send(twiml.toString());
+  }
+
+  // ── Comprobar disponibilidad ──────────────────────────────────────
+  async function comprobarDisponibilidad(dia, hora) {
+    try {
+      const url = `${SHEETS_URL}?sheet=disponibilidad&dia=${encodeURIComponent(dia)}&hora=${encodeURIComponent(hora)}`;
+      const r = await fetch(url);
+      const data = await r.json();
+      return data.disponible === true;
+    } catch(e) {
+      console.error('Error disponibilidad:', e.message);
+      return true; // si falla, permite la cita
+    }
   }
 
   const msg = userMessage.toLowerCase();
@@ -68,7 +80,7 @@ module.exports = async function handler(req, res) {
   if (conv.paso === 'consulta_telefono') {
     conv.paso = null;
     try {
-      const r = await fetch(SHEETS_URL + '?sheet=citas');
+      const r = await fetch(SHEETS_URL);
       const citas = await r.json();
       const telefonoLimpio = userMessage.replace(/\s/g, '');
       const miCita = Array.isArray(citas) ? citas.find(c => String(c.telefono).replace(/\s/g,'') === telefonoLimpio && c.estado !== 'Cancelada') : null;
@@ -98,7 +110,7 @@ module.exports = async function handler(req, res) {
   if (conv.paso === 'cancelar_telefono') {
     conv.paso = null;
     try {
-      const r = await fetch(SHEETS_URL + '?sheet=citas');
+      const r = await fetch(SHEETS_URL);
       const citas = await r.json();
       const telefonoLimpio = userMessage.replace(/\s/g, '');
       const miCita = Array.isArray(citas) ? citas.find(c => String(c.telefono).replace(/\s/g,'') === telefonoLimpio && c.estado !== 'Cancelada') : null;
@@ -141,6 +153,7 @@ module.exports = async function handler(req, res) {
     conv.paso = 'telefono';
     return responder(EN ? 'What\'s your phone number?' : '¿Cuál es tu número de teléfono?');
   }
+
   if (conv.paso === 'telefono') {
     conv.telefono = userMessage;
     conv.paso = 'servicio';
@@ -148,11 +161,15 @@ module.exports = async function handler(req, res) {
       ? 'Which service do you need?\n1. Physiotherapy\n2. Osteopathy\n3. Podiatry\n4. Not sure, I need guidance'
       : '¿Qué servicio necesitas?\n1. Fisioterapia\n2. Osteopatía\n3. Podología\n4. No sé, necesito orientación');
   }
+
   if (conv.paso === 'servicio') {
     conv.servicio = userMessage;
     conv.paso = 'dia';
-    return responder(EN ? 'Which day works best for you? (e.g. Monday, Tuesday...)' : '¿Qué día te viene mejor? (ej: lunes, martes...)');
+    return responder(EN
+      ? 'Which day works best for you? (e.g. Monday, Tuesday...)'
+      : '¿Qué día te viene mejor? (ej: lunes, martes...)');
   }
+
   if (conv.paso === 'dia') {
     conv.dia = userMessage;
     conv.paso = 'hora';
@@ -160,8 +177,22 @@ module.exports = async function handler(req, res) {
       ? 'Do you prefer morning (8am-12pm), afternoon (12pm-4pm) or evening (4pm-8pm)?'
       : '¿Prefieres mañana (8am-12pm), tarde (12pm-4pm) o última hora (4pm-8pm)?');
   }
+
   if (conv.paso === 'hora') {
     conv.hora = userMessage;
+
+    // ── Comprobar disponibilidad ──────────────────────────────────
+    const disponible = await comprobarDisponibilidad(conv.dia, conv.hora);
+
+    if (!disponible) {
+      // Franja llena — pedir otra opción
+      conv.paso = 'hora'; // quedarse en el mismo paso
+      return responder(EN
+        ? `Sorry, ${conv.dia} in the ${conv.hora} is fully booked (max 5 appointments). Could you choose another time slot?\n\n- Morning (8am-12pm)\n- Afternoon (12pm-4pm)\n- Evening (4pm-8pm)\n\nOr a different day?`
+        : `Lo siento, el ${conv.dia} por la ${conv.hora} está completo (máximo 5 citas). ¿Podrías elegir otra franja horaria?\n\n- Mañana (8am-12pm)\n- Tarde (12pm-4pm)\n- Última hora (4pm-8pm)\n\n¿O prefieres otro día?`);
+    }
+
+    // Franja disponible — confirmar cita
     conv.paso = null;
 
     await fetch(SHEETS_URL, {
